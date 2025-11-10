@@ -32,7 +32,7 @@
                         <div class="card bg-info text-white">
                             <div class="card-body text-center">
                                 <h5>Общий баланс</h5>
-                                <h3>{{ "%.2f"|format(users|sum(attribute='balance')) }} €</h3>
+                                <h3>{{ "%.2f"|format(users|sum(attribute='balance')) }} ₽</h3>
                             </div>
                         </div>
                     </div>
@@ -129,4 +129,5 @@
         </div>
     </div>
 </div>
+
 {% endblock %}
