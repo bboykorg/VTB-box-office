@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - ФинСервис{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto text-center mb-5">
+        <h1 class="display-4 mb-4">Добро пожаловать в ФинСервис</h1>
+        <p class="lead">Управляйте своими финансами быстро и безопасно</p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Баланс -->
+    <div class="col-md-4 mb-4">
+        <div class="card balance-card shadow">
+            <div class="card-body text-center">
+                <h5 class="card-title"><i class="fas fa-wallet me-2"></i>Ваш баланс</h5>
+                <h2 class="card-text">{{ "%.2f"|format(current_user.balance) }} ₽</h2>
+            </div>
+        </div>
+
+        <!-- Курсы валют под балансом -->
+        <div class="currency-widget mt-4">
+            <h4>💱 Курсы валют</h4>
+            <div id="currency-rates">
+                <div class="currency-rate">
+                    <span>USD/RUB</span>
+                    <span id="usd-rate">Загрузка...</span>
+                </div>
+                <div class="currency-rate">
+                    <span>EUR/RUB</span>
+                    <span id="eur-rate">Загрузка...</span>
+                </div>
+                <div class="currency-rate">
+                    <span>CNY/RUB</span>
+                    <span id="cny-rate">Загрузка...</span>
+                </div>
+            </div>
+            <small class="text-muted">Обновляется автоматически</small>
+        </div>
+    </div>
+
+    <!-- Быстрые операции -->
+    <div class="col-md-8">
+        <div class="row">
+            <div class="col-md-6 mb-4">
+                <div class="card operation-card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Пополнить счет</h5>
+                        <p class="card-text">Внесите деньги на ваш счет</p>
+                        <a href="{{ url_for('deposit') }}" class="btn btn-success">Пополнить</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card operation-card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-minus-circle fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title">Снять средства</h5>
+                        <p class="card-text">Снять деньги со счета</p>
+                        <a href="{{ url_for('withdraw') }}" class="btn btn-warning">Снять</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card operation-card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-exchange-alt fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Перевод</h5>
+                        <p class="card-text">Перевести деньги другому пользователю</p>
+                        <a href="{{ url_for('transfer') }}" class="btn btn-primary">Перевести</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 mb-4">
+                <div class="card operation-card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">Профиль</h5>
+                        <p class="card-text">Просмотр истории операций</p>
+                        <a href="{{ url_for('profile') }}" class="btn btn-info">Профиль</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="deposit-calculator">
+            <h4>💰 Калькулятор вкладов</h4>
+            <div class="row">
+                <div class="col-md-8">
+                    <form class="calculator-form" id="deposit-form">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="amount">Сумма вклада (₽):</label>
+                                    <input type="number" id="amount" value="100000" min="1000" step="1000" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="term">Срок (месяцев):</label>
+                                    <select id="term" class="form-control" required>
+                                        <option value="3">3 месяца (5%)</option>
+                                        <option value="6">6 месяцев (6%)</option>
+                                        <option value="12">1 год (7%)</option>
+                                        <option value="24">2 года (8%)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="type">Тип вклада:</label>
+                                    <select id="type" class="form-control" required>
+                                        <option value="simple">Простой (без капитализации)</option>
+                                        <option value="compound">С капитализацией</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Широкая кнопка внизу -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="button" class="calculate-btn-wide" onclick="calculateDeposit()">
+                                    <i class="fas fa-calculator me-2"></i>Рассчитать доход по вкладу
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-4">
+                    <div class="result" id="result" style="display: none;">
+                        <h5>Результат расчета:</h5>
+                        <div id="result-text"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_admin %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <h5 class="card-title text-danger"><i class="fas fa-shield-alt me-2"></i>Административная панель</h5>
+                <p class="card-text">Просмотр всех транзакций и пользователей системы</p>
+                <a href="{{ url_for('admin') }}" class="btn btn-danger">Админ-панель</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+// Функция для загрузки курсов валют
+async function loadCurrencyRates() {
+    try {
+        // Имитация данных (замените на реальный парсинг)
+        const mockRates = {
+            USD: (Math.random() * 10 + 80).toFixed(2),
+            EUR: (Math.random() * 10 + 90).toFixed(2),
+            CNY: (Math.random() * 5 + 10).toFixed(2)
+        };
+
+        document.getElementById('usd-rate').textContent = mockRates.USD + ' ₽';
+        document.getElementById('eur-rate').textContent = mockRates.EUR + ' ₽';
+        document.getElementById('cny-rate').textContent = mockRates.CNY + ' ₽';
+
+    } catch (error) {
+        console.error('Ошибка загрузки курсов:', error);
+    }
+}
+
+// Функция для расчета вклада
+function calculateDeposit() {
+    const amount = parseFloat(document.getElementById('amount').value);
+    const term = parseInt(document.getElementById('term').value);
+    const type = document.getElementById('type').value;
+
+    // Процентные ставки в зависимости от срока
+    const rates = {3: 5, 6: 6, 12: 7, 24: 8};
+    const rate = rates[term] || 5;
+
+    let total, profit;
+
+    if (type === 'simple') {
+        // Простой процент
+        profit = (amount * rate * term / 12) / 100;
+        total = amount + profit;
+    } else {
+        // Сложный процент (ежемесячная капитализация)
+        const monthlyRate = rate / 12 / 100;
+        total = amount * Math.pow(1 + monthlyRate, term);
+        profit = total - amount;
+    }
+
+    const resultDiv = document.getElementById('result');
+    const resultText = document.getElementById('result-text');
+
+    resultText.innerHTML = `
+        <div class="mb-2"><strong>Итоговая сумма:</strong><br>${total.toFixed(2)} ₽</div>
+        <div class="mb-2"><strong>Доход:</strong><br>${profit.toFixed(2)} ₽</div>
+        <div class="mb-2"><strong>Ставка:</strong><br>${rate}% годовых</div>
+        <div><strong>Срок:</strong><br>${term} месяцев</div>
+    `;
+
+    resultDiv.style.display = 'block';
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadCurrencyRates();
+    calculateDeposit(); // Рассчитать вклад при загрузке
+
+    // Обновляем курсы каждые 5 минут
+    setInterval(loadCurrencyRates, 300000);
+});
+</script>
+
+{% endblock %}

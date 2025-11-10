@@ -185,3 +185,81 @@ footer {
     margin-top: auto;
     text-align: center;
 }
+.balance-card {
+    border-left: 4px solid var(--vtb-blue);
+}
+
+.operation-card {
+    transition: transform 0.2s;
+    border-left: 4px solid #ddd;
+}
+
+.operation-card:hover {
+    transform: translateY(-5px);
+}
+
+.operation-card:nth-child(1) {
+    border-left-color: #28a745;
+}
+
+.operation-card:nth-child(2) {
+    border-left-color: #ffc107;
+}
+
+.operation-card:nth-child(3) {
+    border-left-color: var(--vtb-blue);
+}
+
+.operation-card:nth-child(4) {
+    border-left-color: #17a2b8;
+}
+
+.calculate-btn-wide {
+    background: var(--vtb-blue);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 51, 160, 0.3);
+}
+
+.calculate-btn-wide:hover {
+    background: var(--vtb-light-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 51, 160, 0.4);
+}
+
+.calculate-btn-wide:active {
+    transform: translateY(0);
+}
+
+.deposit-calculator {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #28a745;
+}
+
+.calculator-form {
+    margin-bottom: 0;
+}
+
+.form-control {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
+}
+
+.result {
+    background: var(--vtb-gray);
+    padding: 20px;
+    border-radius: 8px;
+    height: 100%;
+}
