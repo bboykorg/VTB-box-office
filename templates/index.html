@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}Главная - ВТБ Онлайн-касса{% endblock %}
+{% block title %}Главная - ФинСервис{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-lg-8 mx-auto text-center mb-5">
-        <h1 class="display-4 mb-4">Добро пожаловать в ВТБ Онлайн-кассу</h1>
+        <h1 class="display-4 mb-4">Добро пожаловать в ФинСервис</h1>
         <p class="lead">Управляйте своими финансами быстро и безопасно</p>
     </div>
 </div>
@@ -34,7 +34,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
@@ -45,7 +45,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
@@ -56,7 +56,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
@@ -66,6 +66,67 @@
                         <a href="{{ url_for('profile') }}" class="btn btn-info">Профиль</a>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="currency-widget">
+            <h4>💱 Курсы валют</h4>
+            <div id="currency-rates">
+                <div class="currency-rate">
+                    <span>USD/RUB</span>
+                    <span id="usd-rate">Загрузка...</span>
+                </div>
+                <div class="currency-rate">
+                    <span>EUR/RUB</span>
+                    <span id="eur-rate">Загрузка...</span>
+                </div>
+                <div class="currency-rate">
+                    <span>CNY/RUB</span>
+                    <span id="cny-rate">Загрузка...</span>
+                </div>
+            </div>
+            <small class="text-muted">Обновляется автоматически</small>
+        </div>
+    </div>
+
+    <!-- Калькулятор вкладов -->
+    <div class="col-md-6 mb-4">
+        <div class="deposit-calculator">
+            <h4>💰 Калькулятор вкладов</h4>
+            <form class="calculator-form" id="deposit-form">
+                <div class="form-group">
+                    <label for="amount">Сумма вклада (₽):</label>
+                    <input type="number" id="amount" value="100000" min="1000" step="1000" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="term">Срок (месяцев):</label>
+                    <select id="term" required>
+                        <option value="3">3 месяца (5%)</option>
+                        <option value="6">6 месяцев (6%)</option>
+                        <option value="12">1 год (7%)</option>
+                        <option value="24">2 года (8%)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="type">Тип вклада:</label>
+                    <select id="type" required>
+                        <option value="simple">Простой (без капитализации)</option>
+                        <option value="compound">С капитализацией</option>
+                    </select>
+                </div>
+
+                <button type="button" class="calculate-btn" onclick="calculateDeposit()">Рассчитать</button>
+            </form>
+
+            <div class="result" id="result" style="display: none;">
+                <h5>Результат:</h5>
+                <p id="result-text"></p>
             </div>
         </div>
     </div>
@@ -84,4 +145,105 @@
     </div>
 </div>
 {% endif %}
+
+<script>
+// Функция для загрузки курсов валют
+async function loadCurrencyRates() {
+    try {
+        // Здесь можно подключить реальный API, например:
+        // const response = await fetch('https://api.exchangerate-api.com/v4/latest/RUB');
+
+        // Имитация данных (замените на реальный парсинг)
+        const mockRates = {
+            USD: (Math.random() * 10 + 80).toFixed(2),
+            EUR: (Math.random() * 10 + 90).toFixed(2),
+            CNY: (Math.random() * 5 + 10).toFixed(2)
+        };
+
+        document.getElementById('usd-rate').textContent = mockRates.USD + ' ₽';
+        document.getElementById('eur-rate').textContent = mockRates.EUR + ' ₽';
+        document.getElementById('cny-rate').textContent = mockRates.CNY + ' ₽';
+
+    } catch (error) {
+        console.error('Ошибка загрузки курсов:', error);
+    }
+}
+
+// Функция для расчета вклада
+function calculateDeposit() {
+    const amount = parseFloat(document.getElementById('amount').value);
+    const term = parseInt(document.getElementById('term').value);
+    const type = document.getElementById('type').value;
+
+    // Процентные ставки в зависимости от срока
+    const rates = {3: 5, 6: 6, 12: 7, 24: 8};
+    const rate = rates[term] || 5;
+
+    let total, profit;
+
+    if (type === 'simple') {
+        // Простой процент
+        profit = (amount * rate * term / 12) / 100;
+        total = amount + profit;
+    } else {
+        // Сложный процент (ежемесячная капитализация)
+        const monthlyRate = rate / 12 / 100;
+        total = amount * Math.pow(1 + monthlyRate, term);
+        profit = total - amount;
+    }
+
+    const resultDiv = document.getElementById('result');
+    const resultText = document.getElementById('result-text');
+
+    resultText.innerHTML = `
+        <strong>Итоговая сумма:</strong> ${total.toFixed(2)} ₽<br>
+        <strong>Доход:</strong> ${profit.toFixed(2)} ₽<br>
+        <strong>Ставка:</strong> ${rate}% годовых<br>
+        <strong>Срок:</strong> ${term} месяцев
+    `;
+
+    resultDiv.style.display = 'block';
+}
+
+// Инициализация при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    loadCurrencyRates();
+    calculateDeposit(); // Рассчитать вклад при загрузке
+
+    // Обновляем курсы каждые 5 минут
+    setInterval(loadCurrencyRates, 300000);
+});
+</script>
+
+<style>
+/* Дополнительные стили для интеграции */
+.balance-card {
+    border-left: 4px solid var(--vtb-blue);
+}
+
+.operation-card {
+    transition: transform 0.2s;
+    border-left: 4px solid #ddd;
+}
+
+.operation-card:hover {
+    transform: translateY(-5px);
+}
+
+.operation-card:nth-child(1) {
+    border-left-color: #28a745;
+}
+
+.operation-card:nth-child(2) {
+    border-left-color: #ffc107;
+}
+
+.operation-card:nth-child(3) {
+    border-left-color: var(--vtb-blue);
+}
+
+.operation-card:nth-child(4) {
+    border-left-color: #17a2b8;
+}
+</style>
 {% endblock %}

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="deposit-calculator">
+    <h4>💰 Калькулятор вкладов</h4>
+    <form class="calculator-form" id="deposit-form">
+        <div class="form-group">
+            <label for="amount">Сумма вклада (₽):</label>
+            <input type="number" id="amount" value="100000" min="1000" step="1000" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="term">Срок (месяцев):</label>
+            <select id="term" required>
+                <option value="3">3 месяца (5%)</option>
+                <option value="6">6 месяцев (6%)</option>
+                <option value="12">1 год (7%)</option>
+                <option value="24">2 года (8%)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="type">Тип вклада:</label>
+            <select id="type" required>
+                <option value="simple">Простой (без капитализации)</option>
+                <option value="compound">С капитализацией</option>
+            </select>
+        </div>
+        
+        <button type="button" class="calculate-btn" onclick="calculateDeposit()">Рассчитать</button>
+    </form>
+    
+    <div class="result" id="result" style="display: none;">
+        <h5>Результат:</h5>
+        <p id="result-text"></p>
+    </div>
+</div>
+
+<script>
+function calculateDeposit() {
+    const amount = parseFloat(document.getElementById('amount').value);
+    const term = parseInt(document.getElementById('term').value);
+    const type = document.getElementById('type').value;
+    
+    // Процентные ставки в зависимости от срока
+    const rates = {3: 5, 6: 6, 12: 7, 24: 8};
+    const rate = rates[term] || 5;
+    
+    let total, profit;
+    
+    if (type === 'simple') {
+        // Простой процент
+        profit = (amount * rate * term / 12) / 100;
+        total = amount + profit;
+    } else {
+        // Сложный процент (ежемесячная капитализация)
+        const monthlyRate = rate / 12 / 100;
+        total = amount * Math.pow(1 + monthlyRate, term);
+        profit = total - amount;
+    }
+    
+    const resultDiv = document.getElementById('result');
+    const resultText = document.getElementById('result-text');
+    
+    resultText.innerHTML = `
+        <strong>Итоговая сумма:</strong> ${total.toFixed(2)} ₽<br>
+        <strong>Доход:</strong> ${profit.toFixed(2)} ₽<br>
+        <strong>Ставка:</strong> ${rate}% годовых<br>
+        <strong>Срок:</strong> ${term} месяцев
+    `;
+    
+    resultDiv.style.display = 'block';
+}
+
+// Рассчитать при загрузке
+document.addEventListener('DOMContentLoaded', calculateDeposit);
+</script>
+{% endblock %}

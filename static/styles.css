@@ -1,44 +1,187 @@
-.bank-header {
-    background: linear-gradient(135deg, #0047BB 0%, #002D72 100%);
-    color: white;
-}
-.balance-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-.operation-card {
-    transition: transform 0.2s;
-}
-.operation-card:hover {
-    transform: translateY(-5px);
-}
-.navbar-brand {
-    font-weight: bold;
+/* ===== VTB COLOR SCHEME ===== */
+:root {
+    --vtb-blue: #0033a0;
+    --vtb-light-blue: #0054a6;
+    --vtb-red: #d52b1e;
+    --vtb-dark-blue: #002d72;
+    --vtb-gray: #f5f5f5;
+    --vtb-text: #333333;
 }
 
-/* Стили для фиксированного футера */
+/* ===== FIX FOOTER POSITION ===== */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
 }
+
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-}
-.content-wrapper {
-    flex: 1 0 auto;
-}
-.footer {
-    background-color: #f8f9fa;
-    padding: 1rem 0;
-    margin-top: auto;
-    margin-left: 30vh;
-    flex-shrink: 0;
-    border-top: 1px solid #dee2e6;
+    font-family: 'Arial', sans-serif;
+    background-color: var(--vtb-gray);
+    color: var(--vtb-text);
 }
 
-.main-content {
-    padding-bottom: 2rem;
+.container {
+    flex: 1;
+    padding-bottom: 20px;
+}
+
+/* ===== HEADER STYLES ===== */
+header {
+    background: linear-gradient(135deg, var(--vtb-blue) 0%, var(--vtb-light-blue) 100%);
+    color: white;
+    padding: 1rem 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: white !important;
+    text-decoration: none;
+}
+
+.navbar-brand:hover {
+    color: #ffd700 !important;
+}
+
+/* ===== ADMIN STYLES ===== */
+.admin-banner {
+    background-color: var(--vtb-red);
+    color: white;
+    padding: 10px 0;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.admin-panel {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--vtb-red);
+}
+
+/* ===== CURRENCY STYLES ===== */
+.currency-widget {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid var(--vtb-blue);
+}
+
+.currency-rate {
+    display: flex;
+    justify-content: space-between;
+    margin: 8px 0;
+    padding: 8px;
+    background: var(--vtb-gray);
+    border-radius: 4px;
+}
+
+.currency-up {
+    color: #28a745;
+}
+
+.currency-down {
+    color: var(--vtb-red);
+}
+
+/* ===== DEPOSIT CALCULATOR ===== */
+.deposit-calculator {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #28a745;
+}
+
+.calculator-form {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--vtb-dark-blue);
+}
+
+.form-group input, .form-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.calculate-btn {
+    background: var(--vtb-blue);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.calculate-btn:hover {
+    background: var(--vtb-light-blue);
+}
+
+.result {
+    background: var(--vtb-gray);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+/* ===== BUTTON STYLES ===== */
+.btn-primary {
+    background-color: var(--vtb-blue);
+    border-color: var(--vtb-blue);
+}
+
+.btn-primary:hover {
+    background-color: var(--vtb-light-blue);
+    border-color: var(--vtb-light-blue);
+}
+
+.btn-danger {
+    background-color: var(--vtb-red);
+    border-color: var(--vtb-red);
+}
+
+/* ===== CARD STYLES ===== */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: var(--vtb-blue);
+    color: white;
+    font-weight: bold;
+}
+
+footer {
+    background-color: var(--vtb-dark-blue);
+    color: white;
+    padding: 20px 0;
+    margin-top: auto;
+    text-align: center;
 }

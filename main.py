@@ -302,8 +302,15 @@ def admin():
     users = db.query(User).all()
     return render_template("admin.html", transactions=transactions, users=users)
 
+@app.route('/currency')
+def currency():
+    return render_template('currency.html')
 
-# Создание начальных данных
+@app.route('/deposit_calculator')
+def deposit_calculator():
+    return render_template('deposit_calculator.html')
+
+
 with app.app_context():
     db = next(get_db())
     if not db.query(User).filter_by(username="admin").first():
