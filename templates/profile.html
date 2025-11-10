@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль - ВТБ Онлайн-касса{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Информация о пользователе -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-user me-2"></i>Информация о пользователе</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+                        <p><strong>Баланс:</strong> <span class="fw-bold text-primary">{{ "%.2f"|format(user.balance) }} ₽</span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Статус:</strong> 
+                            {% if user.is_admin %}
+                                <span class="badge bg-danger">Администратор</span>
+                            {% else %}
+                                <span class="badge bg-success">Пользователь</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Дата регистрации:</strong> {{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- История транзакций -->
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-history me-2"></i>Последние операции</h4>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Тип</th>
+                                <th>Сумма</th>
+                                <th>Описание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>
+                                    {% if transaction.type == 'deposit' %}
+                                        <span class="badge bg-success">Пополнение</span>
+                                    {% elif transaction.type == 'withdraw' %}
+                                        <span class="badge bg-warning">Снятие</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Перевод</span>
+                                    {% endif %}
+                                </td>
+                                <td class="{{ 'text-success' if transaction.type == 'deposit' else 'text-danger' }}">
+                                    {{ transaction.amount }} ₽
+                                </td>
+                                <td>{{ transaction.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center">Нет операций</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

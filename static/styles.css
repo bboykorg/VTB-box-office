@@ -1,0 +1,44 @@
+.bank-header {
+    background: linear-gradient(135deg, #0047BB 0%, #002D72 100%);
+    color: white;
+}
+.balance-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+.operation-card {
+    transition: transform 0.2s;
+}
+.operation-card:hover {
+    transform: translateY(-5px);
+}
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Стили для фиксированного футера */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+.content-wrapper {
+    flex: 1 0 auto;
+}
+.footer {
+    background-color: #f8f9fa;
+    padding: 1rem 0;
+    margin-top: auto;
+    margin-left: 30vh;
+    flex-shrink: 0;
+    border-top: 1px solid #dee2e6;
+}
+
+.main-content {
+    padding-bottom: 2rem;
+}

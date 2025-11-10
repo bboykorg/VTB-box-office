@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Админ-панель - ВТБ Онлайн-касса{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Административная панель</h4>
+            </div>
+            <div class="card-body">
+                <!-- Статистика -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <h5>Пользователей</h5>
+                                <h3>{{ users|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5>Транзакций</h5>
+                                <h3>{{ transactions|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5>Общий баланс</h5>
+                                <h3>{{ "%.2f"|format(users|sum(attribute='balance')) }} €</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h5>Администраторов</h5>
+                                <h3>{{ users|selectattr('is_admin')|list|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Пользователи -->
+                <h5 class="mb-3"><i class="fas fa-users me-2"></i>Пользователи системы</h5>
+                <div class="table-responsive mb-5">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя пользователя</th>
+                                <th>Баланс</th>
+                                <th>Статус</th>
+                                <th>Дата регистрации</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.id }}</td>
+                                <td>{{ user.username }}</td>
+                                <td>{{ "%.2f"|format(user.balance) }} ₽</td>
+                                <td>
+                                    {% if user.is_admin %}
+                                        <span class="badge bg-danger">Админ</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Пользователь</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Все транзакции -->
+                <h5 class="mb-3"><i class="fas fa-list-alt me-2"></i>Все транзакции</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Пользователь</th>
+                                <th>Тип</th>
+                                <th>Сумма</th>
+                                <th>Получатель</th>
+                                <th>Описание</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.id }}</td>
+                                <td>{{ transaction.user.username }}</td>
+                                <td>
+                                    {% if transaction.type == 'deposit' %}
+                                        <span class="badge bg-success">Пополнение</span>
+                                    {% elif transaction.type == 'withdraw' %}
+                                        <span class="badge bg-warning">Снятие</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">Перевод</span>
+                                    {% endif %}
+                                </td>
+                                <td class="{{ 'text-success' if transaction.type == 'deposit' else 'text-danger' }}">
+                                    {{ transaction.amount }} ₽
+                                </td>
+                                <td>
+                                    {% if transaction.target %}
+                                        {{ transaction.target.username }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>{{ transaction.description }}</td>
+                                <td>{{ transaction.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
