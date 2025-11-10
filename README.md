@@ -81,35 +81,20 @@
 
 
     vtb-box-office/
-
         ├── main.py    - Основной файл приложения
-        
         ├── requirements.txt        - Зависимости проекта
-        
         ├── VTB.db                 - База данных SQLite (создается автоматически)
-        
         ├── static/
-        
         │   └── styles.css         - CSS стили
-        
         └── templates/
-        
             ├── base.html          - Базовый шаблон
-            
             ├── index.html         - Главная страница
-            
             ├── login.html         - Страница входа
-            
             ├── register.html      - Страница регистрации
-            
             ├── profile.html       - Профиль пользователя
-            
             ├── deposit.html       - Пополнение счета
-            
             ├── withdraw.html      - Снятие средств
-            
             ├── transfer.html      - Перевод денег
-            
             └── admin.html         - Админ-панель
     
 👤 Тестовые аккаунты
