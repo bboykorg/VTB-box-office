@@ -24,6 +24,10 @@
                 </a>
                 <div class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
+                        <!-- Кнопка ИИ-помощника -->
+                        <button class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#aiAssistantModal">
+                            <i class="fas fa-robot me-1"></i>Помощник
+                        </button>
                         <span class="nav-item nav-link">👤 {{ current_user.username }}</span>
                         <a class="nav-item nav-link" href="{{ url_for('logout') }}">Выйти</a>
                     {% else %}
@@ -53,7 +57,102 @@
         </div>
     </footer>
 
+    <!-- Модальное окно ИИ-помощника -->
+    <div class="modal fade" id="aiAssistantModal" tabindex="-1" aria-labelledby="aiAssistantModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aiAssistantModalLabel">
+                        <i class="fas fa-robot me-2"></i>ИИ-помощник ФинСервис
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="aiQuestion" class="form-label">Задайте вопрос о работе приложения:</label>
+                        <textarea class="form-control" id="aiQuestion" rows="3"
+                                  placeholder="Например: Как сделать перевод? Где посмотреть историю операций? Как работает калькулятор вкладов?"></textarea>
+                    </div>
+                    <div id="aiResponse" class="alert alert-info" style="display: none;">
+                        <strong>Ответ:</strong>
+                        <div id="responseText"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary" id="askAIButton" onclick="askAI()">
+                        <i class="fas fa-paper-plane me-1"></i>Спросить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    function askAI() {
+        const question = document.getElementById('aiQuestion').value.trim();
+        const askButton = document.getElementById('askAIButton');
+        const responseDiv = document.getElementById('aiResponse');
+        const responseText = document.getElementById('responseText');
+
+        if (!question) {
+            alert('Пожалуйста, введите ваш вопрос');
+            return;
+        }
+
+        // Показываем индикатор загрузки
+        askButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Обработка...';
+        askButton.disabled = true;
+
+        // Отправляем запрос на сервер
+        fetch('/run-ai', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                outcome: [question]
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.results && data.results.length > 0) {
+                responseText.textContent = data.results[0].result;
+                responseDiv.style.display = 'block';
+            } else {
+                responseText.textContent = 'Не удалось получить ответ. Попробуйте еще раз.';
+                responseDiv.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            responseText.textContent = 'Произошла ошибка при обращении к серверу.';
+            responseDiv.style.display = 'block';
+        })
+        .finally(() => {
+            // Восстанавливаем кнопку
+            askButton.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Спросить';
+            askButton.disabled = false;
+        });
+    }
+
+    // Обработка нажатия Enter в текстовом поле
+    document.getElementById('aiQuestion').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            askAI();
+        }
+    });
+
+    // Очистка ответа при открытии модального окна
+    document.getElementById('aiAssistantModal').addEventListener('show.bs.modal', function() {
+        document.getElementById('aiResponse').style.display = 'none';
+        document.getElementById('aiQuestion').value = '';
+    });
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>

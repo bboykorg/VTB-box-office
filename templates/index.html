@@ -19,6 +19,26 @@
                 <h2 class="card-text">{{ "%.2f"|format(current_user.balance) }} ₽</h2>
             </div>
         </div>
+
+        <!-- Курсы валют под балансом -->
+        <div class="currency-widget mt-4">
+            <h4>💱 Курсы валют</h4>
+            <div id="currency-rates">
+                <div class="currency-rate">
+                    <span>USD/RUB</span>
+                    <span id="usd-rate">Загрузка...</span>
+                </div>
+                <div class="currency-rate">
+                    <span>EUR/RUB</span>
+                    <span id="eur-rate">Загрузка...</span>
+                </div>
+                <div class="currency-rate">
+                    <span>CNY/RUB</span>
+                    <span id="cny-rate">Загрузка...</span>
+                </div>
+            </div>
+            <small class="text-muted">Обновляется автоматически</small>
+        </div>
     </div>
 
     <!-- Быстрые операции -->
@@ -71,62 +91,57 @@
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-6 mb-4">
-        <div class="currency-widget">
-            <h4>💱 Курсы валют</h4>
-            <div id="currency-rates">
-                <div class="currency-rate">
-                    <span>USD/RUB</span>
-                    <span id="usd-rate">Загрузка...</span>
-                </div>
-                <div class="currency-rate">
-                    <span>EUR/RUB</span>
-                    <span id="eur-rate">Загрузка...</span>
-                </div>
-                <div class="currency-rate">
-                    <span>CNY/RUB</span>
-                    <span id="cny-rate">Загрузка...</span>
-                </div>
-            </div>
-            <small class="text-muted">Обновляется автоматически</small>
-        </div>
-    </div>
-
-    <!-- Калькулятор вкладов -->
-    <div class="col-md-6 mb-4">
+<div class="row mt-4">
+    <div class="col-12">
         <div class="deposit-calculator">
             <h4>💰 Калькулятор вкладов</h4>
-            <form class="calculator-form" id="deposit-form">
-                <div class="form-group">
-                    <label for="amount">Сумма вклада (₽):</label>
-                    <input type="number" id="amount" value="100000" min="1000" step="1000" required>
+            <div class="row">
+                <div class="col-md-8">
+                    <form class="calculator-form" id="deposit-form">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="amount">Сумма вклада (₽):</label>
+                                    <input type="number" id="amount" value="100000" min="1000" step="1000" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="term">Срок (месяцев):</label>
+                                    <select id="term" class="form-control" required>
+                                        <option value="3">3 месяца (5%)</option>
+                                        <option value="6">6 месяцев (6%)</option>
+                                        <option value="12">1 год (7%)</option>
+                                        <option value="24">2 года (8%)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="type">Тип вклада:</label>
+                                    <select id="type" class="form-control" required>
+                                        <option value="simple">Простой (без капитализации)</option>
+                                        <option value="compound">С капитализацией</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Широкая кнопка внизу -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="button" class="calculate-btn-wide" onclick="calculateDeposit()">
+                                    <i class="fas fa-calculator me-2"></i>Рассчитать доход по вкладу
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="form-group">
-                    <label for="term">Срок (месяцев):</label>
-                    <select id="term" required>
-                        <option value="3">3 месяца (5%)</option>
-                        <option value="6">6 месяцев (6%)</option>
-                        <option value="12">1 год (7%)</option>
-                        <option value="24">2 года (8%)</option>
-                    </select>
+                <div class="col-md-4">
+                    <div class="result" id="result" style="display: none;">
+                        <h5>Результат расчета:</h5>
+                        <div id="result-text"></div>
+                    </div>
                 </div>
-
-                <div class="form-group">
-                    <label for="type">Тип вклада:</label>
-                    <select id="type" required>
-                        <option value="simple">Простой (без капитализации)</option>
-                        <option value="compound">С капитализацией</option>
-                    </select>
-                </div>
-
-                <button type="button" class="calculate-btn" onclick="calculateDeposit()">Рассчитать</button>
-            </form>
-
-            <div class="result" id="result" style="display: none;">
-                <h5>Результат:</h5>
-                <p id="result-text"></p>
             </div>
         </div>
     </div>
@@ -150,9 +165,6 @@
 // Функция для загрузки курсов валют
 async function loadCurrencyRates() {
     try {
-        // Здесь можно подключить реальный API, например:
-        // const response = await fetch('https://api.exchangerate-api.com/v4/latest/RUB');
-
         // Имитация данных (замените на реальный парсинг)
         const mockRates = {
             USD: (Math.random() * 10 + 80).toFixed(2),
@@ -196,10 +208,10 @@ function calculateDeposit() {
     const resultText = document.getElementById('result-text');
 
     resultText.innerHTML = `
-        <strong>Итоговая сумма:</strong> ${total.toFixed(2)} ₽<br>
-        <strong>Доход:</strong> ${profit.toFixed(2)} ₽<br>
-        <strong>Ставка:</strong> ${rate}% годовых<br>
-        <strong>Срок:</strong> ${term} месяцев
+        <div class="mb-2"><strong>Итоговая сумма:</strong><br>${total.toFixed(2)} ₽</div>
+        <div class="mb-2"><strong>Доход:</strong><br>${profit.toFixed(2)} ₽</div>
+        <div class="mb-2"><strong>Ставка:</strong><br>${rate}% годовых</div>
+        <div><strong>Срок:</strong><br>${term} месяцев</div>
     `;
 
     resultDiv.style.display = 'block';
@@ -215,35 +227,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-/* Дополнительные стили для интеграции */
-.balance-card {
-    border-left: 4px solid var(--vtb-blue);
-}
-
-.operation-card {
-    transition: transform 0.2s;
-    border-left: 4px solid #ddd;
-}
-
-.operation-card:hover {
-    transform: translateY(-5px);
-}
-
-.operation-card:nth-child(1) {
-    border-left-color: #28a745;
-}
-
-.operation-card:nth-child(2) {
-    border-left-color: #ffc107;
-}
-
-.operation-card:nth-child(3) {
-    border-left-color: var(--vtb-blue);
-}
-
-.operation-card:nth-child(4) {
-    border-left-color: #17a2b8;
-}
-</style>
 {% endblock %}

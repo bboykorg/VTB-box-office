@@ -1,13 +1,21 @@
+import os
 from os import environ
 from datetime import datetime
-
-from flask import Flask, render_template, request, redirect, url_for, flash
+import re
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from mistralai import Mistral
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.exc import IntegrityError
+
+api_key = os.environ.get("API_KEY")
+if not api_key:
+    raise RuntimeError("API_KEY должен быть задан в окружении")
+
+model = "mistral-tiny"
+client = Mistral(api_key=api_key)
 
 app = Flask(__name__)
 app.secret_key = environ.get("APP_SECRET", "dev-secret-change-in-prod")
@@ -310,6 +318,88 @@ def currency():
 def deposit_calculator():
     return render_template('deposit_calculator.html')
 
+def build_prompt(outcome):
+    prompt = ("Ты ассистент банковского приложения 'ФинСервис'. "
+              "Твоя задача - помогать пользователям ориентироваться в функциях приложения, "
+              "объяснять как работают различные операции и отвечать на вопросы по использованию системы.\n\n"
+              "https://github.com/bboykorg/VTB-box-office СТРУКТУРУ САЙТА БЕРИ ЗДЕСЬ.\n\n"
+              "Основные функции приложения:\n"
+              "- Просмотр баланса и операций\n"
+              "- Пополнение счета и снятие средств\n"
+              "- Переводы между пользователями\n"
+              "- Калькулятор вкладов\n"
+              "- Курсы валют\n"
+              "- Административная панель (для админов)\n\n"
+              "Отвечай кратко, понятно и по делу. Не придумывай несуществующие функции.\n\n"
+              f"Вопрос пользователя: {outcome}")
+    return prompt
+
+def sanitize_ai_text(text, max_len=4000):
+    if not text:
+        return ""
+
+    text = text.replace('\r\n', '\n').replace('\r', '\n').strip()
+    lines = text.split('\n')
+    cleaned_lines = []
+
+    for line in lines:
+        line = line.strip()
+        if not line:
+            continue
+
+        if any(phrase in line.lower() for phrase in [
+            'как эксперт', 'в качестве', 'проанализировав',
+            'рассмотрев вариант', 'после анализа', 'исходя из'
+        ]):
+            continue
+
+        if any(phrase in line.lower() for phrase in [
+            'в заключение', 'таким образом', 'в итоге',
+            'подводя итоги', 'в целом можно сказать'
+        ]):
+            continue
+
+        cleaned_lines.append(line)
+
+    cleaned = '\n'.join(cleaned_lines)
+    cleaned = re.sub(r'^[\-\*\•\d\.]+\s*', '', cleaned, flags=re.MULTILINE)
+    cleaned = re.sub(r'[\*\-\•]', '', cleaned)
+
+    if len(cleaned) > max_len:
+        cleaned = cleaned[:max_len].rstrip() + '…'
+
+    return cleaned
+
+@app.route("/run-ai", methods=["POST"])
+def run_ai():
+    data = request.get_json() or {}
+    outcome = data.get("outcome", [])
+
+    results = []
+
+    for outcome in outcome:
+        prompt = build_prompt(outcome)
+        ai_text = ""
+
+        try:
+            resp = client.chat.complete(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+            ai_text_raw = getattr(resp.choices[0].message, "content", None) or str(resp)
+            ai_text = sanitize_ai_text(ai_text_raw)
+            print(f"[run-ai-life] succeeded for outcome: {outcome}")
+        except Exception as e:
+            print(f"[run-ai-life] failed for outcome {outcome}: {e}")
+            ai_text = "Ошибка при получении ответа от ИИ. Попробуйте позже."
+
+        results.append({
+            "outcome": outcome,
+            "result": ai_text
+        })
+
+    return jsonify({"results": results}), 200
 
 with app.app_context():
     db = next(get_db())
