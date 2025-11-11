@@ -123,6 +123,7 @@ async function loadCurrencyRates() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    loadCurrencyRates();
     setInterval(loadCurrencyRates, 300000);
 });
 </script>
