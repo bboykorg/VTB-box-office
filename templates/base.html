@@ -24,11 +24,10 @@
                 </a>
                 <div class="navbar-nav ms-auto">
                     {% if current_user.is_authenticated %}
-                        <!-- Кнопка ИИ-помощника -->
                         <button class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#aiAssistantModal">
                             <i class="fas fa-robot me-1"></i>Помощник
                         </button>
-                        <span class="nav-item nav-link">👤 {{ current_user.username }}</span>
+                    <a class="nav-item nav-link" href="{{ url_for('profile') }}">{{ current_user.username }}</a>
                         <a class="nav-item nav-link" href="{{ url_for('logout') }}">Выйти</a>
                     {% else %}
                         <a class="nav-item nav-link" href="{{ url_for('login') }}">Войти</a>
@@ -57,7 +56,6 @@
         </div>
     </footer>
 
-    <!-- Модальное окно ИИ-помощника -->
     <div class="modal fade" id="aiAssistantModal" tabindex="-1" aria-labelledby="aiAssistantModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
