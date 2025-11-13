@@ -5,17 +5,14 @@ import re
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from mistralai import Mistral
+
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.exc import IntegrityError
+import requests
 
-api_key = os.environ.get("API_KEY")
-if not api_key:
-    raise RuntimeError("API_KEY должен быть задан в окружении")
-
-model = "mistral-tiny"
-client = Mistral(api_key=api_key)
+OLLAMA_URL = "http://localhost:11434"  # URL по умолчанию для Ollama
+MODEL_NAME = "deepseek-r1:8b"
 
 app = Flask(__name__)
 app.secret_key = environ.get("APP_SECRET", "dev-secret-change-in-prod")
@@ -37,6 +34,7 @@ class User(Base, UserMixin):
     balance = Column(Float, default=0.0)
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    phone_number = Column(String(20),nullable=False)
 
     # Явно указываем foreign_keys для отношений
     transactions = relationship(
@@ -149,6 +147,7 @@ def login():
 def register():
     if request.method == "POST":
         username = request.form["username"].strip()
+        phone_number = request.form["phone"].strip()
         password = request.form["password"]
         confirm_password = request.form.get("confirm_password", "")
 
@@ -164,7 +163,7 @@ def register():
         if db.query(User).filter_by(username=username).first():
             return render_template("register.html", message="Пользователь уже существует")
 
-        user = User(username=username)
+        user = User(username=username, phone_number=phone_number)
         user.set_password(password)
         db.add(user)
         try:
@@ -190,7 +189,8 @@ def profile():
     db = next(get_db())
     transactions = db.query(Transaction).filter_by(user_id=current_user.id).order_by(
         Transaction.timestamp.desc()).limit(10).all()
-    return render_template("profile.html", user=current_user, transactions=transactions)
+
+    return render_template("profile.html", user=current_user, transactions=transactions, phone_number=current_user.phone_number)
 
 
 @app.route("/deposit", methods=["GET", "POST"])
@@ -255,19 +255,33 @@ def withdraw():
 @login_required
 def transfer():
     db = next(get_db())
-    users = db.query(User).filter(User.id != current_user.id).all()
+    # Получаем актуальный баланс из БД
+    current_user_db = db.query(User).get(current_user.id)
+    user_balance = current_user_db.balance
+
     if request.method == "POST":
         try:
-            target_username = request.form["target"]
+            target_phone = request.form["phone"].strip()
             amount = float(request.form["amount"])
-            target = db.query(User).filter_by(username=target_username).first()
+            description = request.form.get("description", "").strip()
+
+            # Нормализация номера телефона
+            normalized_phone = normalize_phone_number(target_phone)
+            if not normalized_phone:
+                flash("Неверный формат номера телефона", "danger")
+                return render_template("transfer.html", user_balance=user_balance)
+
+            # Поиск получателя по нормализованному номеру телефона
+            target = db.query(User).filter_by(phone_number=normalized_phone).first()
 
             if not target:
-                flash("Получатель не найден", "danger")
+                flash("Пользователь с таким номером телефона не найден", "danger")
+            elif target.id == current_user.id:
+                flash("Нельзя переводить средства самому себе", "danger")
             elif amount <= 0:
                 flash("Сумма должна быть положительной", "danger")
-            elif amount > current_user.balance:
-                flash("Недостаточно средств", "danger")
+            elif amount > user_balance:
+                flash("Недостаточно средств на счету. Пожалуйста, пополните счет.", "danger")
             else:
                 # Получаем обоих пользователей из базы данных
                 sender = db.query(User).get(current_user.id)
@@ -276,27 +290,216 @@ def transfer():
                 sender.balance -= amount
                 recipient.balance += amount
 
+                # Формируем описание перевода
+                if not description:
+                    out_description = f"Перевод {amount} ₽ → {recipient.username}"
+                    in_description = f"Получено {amount} ₽ от {sender.username}"
+                else:
+                    out_description = f"Перевод {amount} ₽ → {recipient.username}: {description}"
+                    in_description = f"Получено {amount} ₽ от {sender.username}: {description}"
+
                 tx_out = Transaction(
                     user_id=sender.id,
-                    type="transfer",
+                    type="transfer_out",
                     amount=amount,
                     target_id=recipient.id,
-                    description=f"Перевод {amount} → {recipient.username}"
+                    description=out_description
                 )
+
                 tx_in = Transaction(
                     user_id=recipient.id,
-                    type="transfer",
+                    type="transfer_in",
                     amount=amount,
                     target_id=sender.id,
-                    description=f"Получено {amount} от {sender.username}"
+                    description=in_description
                 )
+
                 db.add_all([tx_out, tx_in])
                 db.commit()
-                flash(f"Переведено {amount} пользователю {recipient.username}", "success")
+
+                flash(f"Успешно переведено {amount} ₽ пользователю {recipient.username}", "success")
                 return redirect(url_for("profile"))
+
         except ValueError:
             flash("Некорректная сумма", "danger")
-    return render_template("transfer.html", users=users)
+        except Exception as e:
+            flash(f"Ошибка при выполнении перевода: {str(e)}", "danger")
+
+    return render_template("transfer.html", user_balance=user_balance)
+
+
+# Функция для нормализации номера телефона
+def normalize_phone_number(phone):
+    if not phone:
+        return None
+
+    # Удаляем все нецифровые символы кроме плюса
+    cleaned = re.sub(r'[^\d+]', '', phone)
+
+    if not cleaned:
+        return None
+
+    # Если номер начинается с 8 (российский номер без кода страны)
+    if cleaned.startswith('8') and len(cleaned) == 11:
+        return '+7' + cleaned[1:]
+
+    # Если номер начинается с 7 (российский номер без плюса)
+    elif cleaned.startswith('7') and len(cleaned) == 11:
+        return '+' + cleaned
+
+    # Если номер уже в международном формате
+    elif cleaned.startswith('+7') and len(cleaned) == 12:
+        return cleaned
+
+    # Если номер в формате без кода страны (только 10 цифр)
+    elif len(cleaned) == 10 and cleaned.isdigit():
+        return '+7' + cleaned
+
+    # Для других случаев возвращаем как есть (может быть иностранный номер)
+    elif cleaned.startswith('+'):
+        return cleaned
+
+    return None
+
+
+@app.route("/api/find-user-by-phone", methods=["POST"])
+@login_required
+def find_user_by_phone():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+
+    phone = data.get("phone", "").strip()
+
+    if not phone:
+        return jsonify({"error": "Номер телефона не указан"}), 400
+
+    # Нормализуем номер телефона
+    normalized_phone = normalize_phone_number(phone)
+    if not normalized_phone:
+        return jsonify({"error": "Неверный формат номера телефона"}), 400
+
+    db = next(get_db())
+    user = db.query(User).filter_by(phone_number=normalized_phone).first()
+
+    if user:
+        if user.id == current_user.id:
+            return jsonify({"error": "Нельзя переводить самому себе"}), 400
+        else:
+            return jsonify({
+                "user": {
+                    "id": user.id,
+                    "username": user.username,
+                    "phone_number": user.phone_number
+                }
+            })
+    else:
+        return jsonify({"error": "Пользователь не найден"}), 404
+
+
+@app.route("/confirm-transfer", methods=["GET", "POST"])
+@login_required
+def confirm_transfer():
+    if request.method == "POST":
+        try:
+            recipient_id = request.form.get("recipient_id")
+            phone = request.form.get("phone")
+            amount = float(request.form.get("amount"))
+            description = request.form.get("description", "")
+
+            db = next(get_db())
+            recipient = db.query(User).get(recipient_id)
+
+            if not recipient:
+                flash("Получатель не найден", "danger")
+                return redirect(url_for("transfer"))
+
+            # Проверяем баланс
+            if amount > current_user.balance:
+                flash("Недостаточно средств", "danger")
+                return redirect(url_for("transfer"))
+
+            return render_template("confirm_transfer.html",
+                                   recipient_username=recipient.username,
+                                   recipient_phone=phone,
+                                   recipient_id=recipient_id,
+                                   amount=amount,
+                                   description=description)
+
+        except Exception as e:
+            flash(f"Ошибка: {str(e)}", "danger")
+            return redirect(url_for("transfer"))
+
+    return redirect(url_for("transfer"))
+
+
+@app.route("/execute-transfer", methods=["POST"])
+@login_required
+def execute_transfer():
+    if request.method == "POST":
+        try:
+            recipient_id = request.form.get("recipient_id")
+            amount = float(request.form.get("amount"))
+            description = request.form.get("description", "")
+            password = request.form.get("password")
+
+            # Проверяем пароль
+            if not current_user.check_password(password):
+                flash("Неверный пароль", "danger")
+                return redirect(url_for("transfer"))
+
+            db = next(get_db())
+            recipient = db.query(User).get(recipient_id)
+            sender = db.query(User).get(current_user.id)
+
+            if not recipient:
+                flash("Получатель не найден", "danger")
+                return redirect(url_for("transfer"))
+
+            # Повторная проверка баланса
+            if amount > sender.balance:
+                flash("Недостаточно средств", "danger")
+                return redirect(url_for("transfer"))
+
+            # Выполняем перевод
+            sender.balance -= amount
+            recipient.balance += amount
+
+            # Формируем описание перевода
+            if not description:
+                out_description = f"Перевод {amount} ₽ → {recipient.username}"
+                in_description = f"Получено {amount} ₽ от {sender.username}"
+            else:
+                out_description = f"Перевод {amount} ₽ → {recipient.username}: {description}"
+                in_description = f"Получено {amount} ₽ от {sender.username}: {description}"
+
+            tx_out = Transaction(
+                user_id=sender.id,
+                type="transfer_out",
+                amount=amount,
+                target_id=recipient.id,
+                description=out_description
+            )
+
+            tx_in = Transaction(
+                user_id=recipient.id,
+                type="transfer_in",
+                amount=amount,
+                target_id=sender.id,
+                description=in_description
+            )
+
+            db.add_all([tx_out, tx_in])
+            db.commit()
+
+            flash(f"Успешно переведено {amount} ₽ пользователю {recipient.username}", "success")
+            return redirect(url_for("profile"))
+
+        except Exception as e:
+            flash(f"Ошибка при выполнении перевода: {str(e)}", "danger")
+            return redirect(url_for("transfer"))
+
+    return redirect(url_for("transfer"))
 
 
 @app.route("/admin")
@@ -316,22 +519,161 @@ def currency():
 
 @app.route('/deposit_calculator')
 def deposit_calculator():
-    return render_template('deposit_calculator.html')
+    user_info = get_user_info()
+    return render_template('deposit_calculator.html',
+                         current_time=user_info["current_time"],
+                         country=user_info["country"])
+
 
 def build_prompt(outcome):
-    prompt = ("Ты ассистент банковского приложения 'ФинСервис'. "
-              "Твоя задача - помогать пользователям ориентироваться в функциях приложения, "
-              "объяснять как работают различные операции и отвечать на вопросы по использованию системы.\n\n"
-              "https://github.com/bboykorg/VTB-box-office СТРУКТУРУ САЙТА БЕРИ ЗДЕСЬ.\n\n"
-              "Основные функции приложения:\n"
-              "- Просмотр баланса и операций\n"
-              "- Пополнение счета и снятие средств\n"
-              "- Переводы между пользователями\n"
-              "- Калькулятор вкладов\n"
-              "- Курсы валют\n"
-              "- Административная панель (для админов)\n\n"
-              "Отвечай кратко, понятно и по делу. Не придумывай несуществующие функции.\n\n"
-              f"Вопрос пользователя: {outcome}")
+    prompt = ("""Ты ассистент банковского веб-приложения "ВТБ Онлайн-касса". 
+Твоя задача - помогать пользователям ориентироваться в функциях приложения.
+
+ПОЛНАЯ СТРУКТУРА ПРИЛОЖЕНИЯ:
+
+1. СИСТЕМА АУТЕНТИФИКАЦИИ:
+   - Регистрация (/register):
+     * Обязательные поля: имя пользователя, номер телефона, пароль
+     * Номер телефона должен быть в формате: +79991234567, 89991234567 или 9991234567
+     * Пароль минимум 4 символа
+     * Проверка уникальности имени пользователя и номера телефона
+
+   - Вход (/login): по имени пользователя и паролю
+   - Выход (/logout)
+
+2. ГЛАВНАЯ СТРАНИЦА (/):
+   - Навигационное меню со всеми доступными функциями
+   - Доступна только после авторизации
+
+3. ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ (/profile):
+   - Отображение текущего баланса
+   - Показ номера телефона пользователя
+   - История последних 10 транзакций с датами и описаниями
+   - Информация о дате регистрации
+
+4. ОПЕРАЦИИ СО СЧЕТОМ:
+   - Пополнение счета (/deposit):
+     * Ввод суммы для пополнения
+     * Сумма должна быть положительной
+     * Баланс увеличивается на указанную сумму
+     * Создается запись в истории транзакций типа "deposit"
+
+   - Снятие средств (/withdraw):
+     * Ввод суммы для снятия
+     * Проверка достаточности средств
+     * Сумма должна быть положительной и не превышать баланс
+     * Баланс уменьшается на указанную сумму
+     * Создается запись в истории транзакций типа "withdraw"
+
+5. СИСТЕМА ПЕРЕВОДОВ (/transfer):
+   - Переводы осуществляются ТОЛЬКО по номеру телефона
+   - Поддерживаемые форматы номеров:
+     * Международный: +79991234567
+     * Российский с 8: 89991234567  
+     * Без кода страны: 9991234567
+   - Система автоматически нормализует номер телефона
+   - Поиск получателя в реальном времени при вводе номера
+   - Валидация: нельзя переводить самому себе
+   - Проверка достаточности средств перед переводом
+   - Создание двух записей в транзакциях:
+     * У отправителя: тип "transfer_out" 
+     * У получателя: тип "transfer_in"
+   - Возможность добавить описание к переводу
+
+6. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ:
+   - Курсы валют (/currency) - страница для просмотра актуальных курсов
+   - Калькулятор вкладов (/deposit_calculator) - расчет доходности вкладов
+
+7. АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (/admin):
+   - Доступна только пользователям с флагом is_admin=True
+   - Просмотр всех пользователей системы
+   - Просмотр всех транзакций всех пользователей
+   - Сортировка транзакций по дате (новые сверху)
+
+8. БАЗА ДАННЫХ И МОДЕЛИ:
+
+   Модель User:
+   - id: идентификатор пользователя
+   - username: уникальное имя пользователя
+   - phone_number: уникальный номер телефона
+   - password_hash: хеш пароля
+   - balance: текущий баланс счета
+   - is_admin: флаг администратора
+   - created_at: дата регистрации
+
+   Модель Transaction:
+   - id: идентификатор транзакции
+   - user_id: ссылка на пользователя
+   - type: тип операции (deposit, withdraw, transfer_out, transfer_in)
+   - amount: сумма операции
+   - target_id: для переводов - ID получателя/отправителя
+   - timestamp: дата и время операции
+   - description: описание операции
+
+9. ТЕСТОВЫЕ ПОЛЬЗОВАТЕЛИ (создаются автоматически):
+   - admin / admin123:
+     * Баланс: 10,000 ₽
+     * Номер телефона: +72345678901
+     * Права: администратор
+
+   - alice / alice123:
+     * Баланс: 500 ₽
+     * Номер телефона: +71234567890
+
+   - bob / bob123:
+     * Баланс: 300 ₽
+     * Номер телефона: +78007006050
+
+10. ТЕХНИЧЕСКИЕ ОСОБЕННОСТИ:
+    - Фреймворк: Flask
+    - База данных: SQLite (файл VTB.db)
+    - ORM: SQLAlchemy
+    - Аутентификация: Flask-Login
+    - Интерфейс: Bootstrap 5
+    - Порт приложения: 5000
+
+11. ВАЖНЫЕ ОГРАНИЧЕНИЯ И ОСОБЕННОСТИ:
+    - Нет функции оплаты счетов или QR-кодов
+    - Нет кредитов, ипотек или рассрочек
+    - Нет мобильного приложения, только веб-версия
+    - Нет уведомлений по email или SMS
+    - Нет истории транзакций старше 10 операций в профиле
+    - Нет восстановления пароля
+    - Нет смены номера телефона после регистрации
+    - Нет мультивалютных счетов
+    - Нет привязки банковских карт
+
+12. ПРОЦЕСС ПЕРЕВОДА:
+    1. Пользователь вводит номер телефона получателя
+    2. Система проверяет формат и нормализует номер
+    3. Осуществляется поиск пользователя по номеру
+    4. Если пользователь найден, отображается его имя
+    5. Пользователь вводит сумму перевода
+    6. Система проверяет достаточность средств
+    7. При подтверждении создаются две транзакции
+
+13. СИСТЕМА БЕЗОПАСНОСТИ:
+    - Пароли хранятся в хешированном виде (Werkzeug)
+    - Сессии управляются через Flask-Login
+    - CSRF-защита через Flask-WTF (если используется)
+    - Валидация всех входящих данных
+
+14. API ЭНДПОИНТЫ:
+    - /api/find-user-by-phone (POST): поиск пользователя по номеру телефона
+    - /run-ai (POST): AI-ассистент для ответов на вопросы
+
+ИНСТРУКЦИЯ ДЛЯ ОТВЕТОВ:
+- Отвечай ТОЛЬКО на вопросы, связанные с описанным функционалом
+- Если вопрос не о банковском приложении или не о деньгах впринципе, вежливо откажись отвечать
+- Объясняй функции конкретно и по шагам
+- Указывай точные пути URL (/profile, /transfer и т.д.)
+- Не придумывай несуществующие функции
+- Сообщения должны быть краткими (1-3 предложения)
+- При переводе всегда упоминай, что нужен номер телефона получателя
+
+Вопрос пользователя: {outcome}
+
+Ответ (кратко и по делу):""").format(outcome=outcome)
     return prompt
 
 def sanitize_ai_text(text, max_len=4000):
@@ -370,29 +712,77 @@ def sanitize_ai_text(text, max_len=4000):
 
     return cleaned
 
+
+def query_ollama(prompt):
+    """Функция для отправки запросов в Ollama"""
+    try:
+        payload = {
+            "model": MODEL_NAME,
+            "prompt": prompt,
+            "stream": False,
+            "options": {
+                "temperature": 0.7,
+                "top_p": 0.9,
+                "top_k": 40,
+            }
+        }
+
+        response = requests.post(
+            f"{OLLAMA_URL}/api/generate",
+            json=payload,
+            timeout=30  # таймаут 30 секунд
+        )
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get("response", "").strip()
+        else:
+            print(f"Ошибка Ollama: {response.status_code} - {response.text}")
+            return None
+
+    except requests.exceptions.ConnectionError:
+        print("Не удалось подключиться к Ollama. Убедитесь, что Ollama запущен.")
+        return None
+    except requests.exceptions.Timeout:
+        print("Таймаут при запросе к Ollama.")
+        return None
+    except Exception as e:
+        print(f"Неожиданная ошибка при запросе к Ollama: {e}")
+        return None
+
+
 @app.route("/run-ai", methods=["POST"])
 def run_ai():
     data = request.get_json() or {}
-    outcome = data.get("outcome", [])
+    outcomes = data.get("outcome", [])
+
+    # Если передан массив, берем первый элемент, иначе работаем со строкой
+    if isinstance(outcomes, list) and outcomes:
+        outcome = outcomes[0]
+    elif isinstance(outcomes, str):
+        outcome = outcomes
+    else:
+        outcome = ""
 
     results = []
 
-    for outcome in outcome:
+    if outcome:
         prompt = build_prompt(outcome)
         ai_text = ""
 
         try:
-            resp = client.chat.complete(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
-            )
-            ai_text_raw = getattr(resp.choices[0].message, "content", None) or str(resp)
-            ai_text = sanitize_ai_text(ai_text_raw)
-            print(f"[run-ai-life] succeeded for outcome: {outcome}")
+            ai_text_raw = query_ollama(prompt)
+
+            if ai_text_raw:
+                ai_text = sanitize_ai_text(ai_text_raw)
+                print(f"[run-ai] succeeded for outcome: {outcome}")
+            else:
+                ai_text = "Не удалось получить ответ от AI. Проверьте, запущен ли Ollama."
+                print(f"[run-ai] failed for outcome: {outcome}")
+
         except Exception as e:
-            print(f"[run-ai-life] failed for outcome {outcome}: {e}")
-            ai_text = "Ошибка при получении ответа от ИИ. Попробуйте позже."
+            print(f"[run-ai] error for outcome {outcome}: {e}")
+            ai_text = "Ошибка при получении ответа от AI. Попробуйте позже."
 
         results.append({
             "outcome": outcome,
@@ -402,16 +792,25 @@ def run_ai():
     return jsonify({"results": results}), 200
 
 with app.app_context():
-    db = next(get_db())
-    if not db.query(User).filter_by(username="admin").first():
-        admin = User(username="admin", is_admin=True, balance=10000)
-        admin.set_password("admin123")
-        alice = User(username="alice", balance=500)
-        alice.set_password("alice123")
-        bob = User(username="bob", balance=300)
-        bob.set_password("bob123")
-        db.add_all([admin, alice, bob])
-        db.commit()
+    db = SessionLocal()
+    try:
+        if not db.query(User).filter_by(username="admin").first():
+            admin = User(username="admin", is_admin=True, balance=10000, phone_number="+72345678901")
+            admin.set_password("admin123")
+            alice = User(username="alice", balance=500, phone_number="+71234567890")
+            alice.set_password("alice123")
+            bob = User(username="bob", balance=300, phone_number="+78007006050")
+            bob.set_password("bob123")
+            db.add_all([admin, alice, bob])
+            db.commit()
+            print("Тестовые пользователи созданы")
+        else:
+            print("Тестовые пользователи уже существуют")
+    except Exception as e:
+        print(f"Ошибка при создании тестовых пользователей: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    app.run(port=5000, debug=True)
