@@ -54,11 +54,11 @@
     
     Поддержка форматов номеров: 
     
-    Международный: `+79991234567`
+    Международный: +79991234567
     
-    Российский: `89991234567` 
+    Российский: 89991234567
     
-    Без кода: `9991234567`
+    Без кода: 9991234567
     
     Автоматическая нормализация номеров телефона
 
@@ -105,44 +105,49 @@
 🚀 Установка и запуск:
    Предварительные требования:
        
-    Python 3.8+
-    
-    pip (менеджер пакетов Python)
+        Python 3.8+
+        
+        pip (менеджер пакетов Python)
+
 
    Установка
-   
+
    Клонируйте репозиторий:
     
-    bash
-    git clone https://github.com/bboykorg/VTB-box-office.git
-    cd vtb-online-cashier
+        bash
+        git clone https://github.com/bboykorg/VTB-box-office.git
+        cd vtb-online-cashier
     
-Создайте виртуальное окружение:
+   Создайте виртуальное окружение:
 
-    bash
-    python -m venv venv
-    source venv/bin/activate  # Linux/MacOS
-    # или
-    venv\Scripts\activate     # Windows
+        bash
+        python -m venv venv
+        source venv/bin/activate  # Linux/MacOS
+        # или
+        venv\Scripts\activate     # Windows
+
+   Установите Ollama:
+   
+        winget install Ollama.Ollama && ollama pull deepseek-r1:8b && ollama serve
     
-Установите зависимости:
-
-    bash
-    pip install -r requirements.txt
-
-Настройте переменную окружения:
-
-    export APP_SECRET="your_secret_key_here"
+   Установите зависимости:
     
-Запустите приложение:
+        bash
+        pip install -r requirements.txt
 
-    bash
-    python main.py
-    
-Откройте в браузере:
+   Настройте переменную окружения:
 
-    http://localhost:5001
+        export APP_SECRET="your_secret_key_here"
     
+   Запустите приложение:
+
+        bash
+        python main.py
+    
+   Откройте в браузере:
+
+        http://localhost:5001
+        
 📁 Структура проекта
 
        vtb-box-office/
