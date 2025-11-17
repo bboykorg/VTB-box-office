@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="currency-widget">
+    <h4>💱 Курсы валют</h4>
+    <div id="currency-rates">
+        <div class="currency-rate">
+            <span>USD/RUB</span>
+            <span id="usd-rate">Загрузка...</span>
+        </div>
+        <div class="currency-rate">
+            <span>EUR/RUB</span>
+            <span id="eur-rate">Загрузка...</span>
+        </div>
+        <div class="currency-rate">
+            <span>CNY/RUB</span>
+            <span id="cny-rate">Загрузка...</span>
+        </div>
+    </div>
+    <small class="text-muted">Обновляется автоматически</small>
+</div>
+
+<script>
+// Простой парсинг курсов валют (можно заменить на реальный API)
+async function loadCurrencyRates() {
+    try {
+        // Здесь можно подключить реальный API, например:
+        // const response = await fetch('https://api.exchangerate-api.com/v4/latest/RUB');
+        
+        // Имитация данных (замените на реальный парсинг)
+        const mockRates = {
+            USD: (Math.random() * 10 + 80).toFixed(2),
+            EUR: (Math.random() * 10 + 90).toFixed(2),
+            CNY: (Math.random() * 5 + 10).toFixed(2)
+        };
+        
+        document.getElementById('usd-rate').textContent = mockRates.USD + ' ₽';
+        document.getElementById('eur-rate').textContent = mockRates.EUR + ' ₽';
+        document.getElementById('cny-rate').textContent = mockRates.CNY + ' ₽';
+        
+    } catch (error) {
+        console.error('Ошибка загрузки курсов:', error);
+    }
+}
+
+// Загружаем курсы при загрузке страницы
+document.addEventListener('DOMContentLoaded', loadCurrencyRates);
+// Обновляем каждые 5 минут
+setInterval(loadCurrencyRates, 300000);
+</script>
+{% endblock %}

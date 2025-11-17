@@ -108,7 +108,10 @@
                                         <span class="badge transfer-badge">Перевод</span>
                                     {% endif %}
                                 </td>
-                                <td class="transaction-amount {{ 'deposit-amount' if transaction.type == 'deposit' else 'withdraw-amount' }}">
+                                <td class="transaction-amount
+                                    {% if transaction.type == 'deposit' %}deposit-amount
+                                    {% elif transaction.type == 'withdraw' %}withdraw-amount
+                                    {% else %}transfer-amount{% endif %}">
                                     {{ transaction.amount }} ₽
                                 </td>
                                 <td class="admin-text">
@@ -198,7 +201,7 @@
 }
 
 .withdraw-badge {
-    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    background: linear-gradient(135deg, #6f42c1 0%, #5a2d9c 100%); /* ФИОЛЕТОВЫЙ */
     color: white;
 }
 
@@ -221,8 +224,8 @@
 }
 
 [data-theme="dark"] .withdraw-badge {
-    background: linear-gradient(135deg, #f7dc6f 0%, #f39c12 100%);
-    color: #212529;
+    background: linear-gradient(135deg, #8e6cbf 0%, #6f42c1 100%); /* ФИОЛЕТОВЫЙ */
+    color: white;
 }
 
 [data-theme="dark"] .transfer-badge {
@@ -230,13 +233,18 @@
     color: white;
 }
 
-/* Суммы транзакций - синие тона */
+/* Суммы транзакций */
 .deposit-amount {
     color: #27ae60 !important;
     font-weight: bold;
 }
 
 .withdraw-amount {
+    color: #6f42c1 !important; /* ФИОЛЕТОВЫЙ */
+    font-weight: bold;
+}
+
+.transfer-amount {
     color: #e74c3c !important;
     font-weight: bold;
 }
@@ -256,6 +264,10 @@
 }
 
 [data-theme="dark"] .withdraw-amount {
+    color: #b197fc !important; /* ФИОЛЕТОВЫЙ */
+}
+
+[data-theme="dark"] .transfer-amount {
     color: #ec7063 !important;
 }
 

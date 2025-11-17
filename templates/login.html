@@ -21,6 +21,9 @@
                         <div class="input-group">
                             <input type="password" class="form-control" id="password" name="password" required
                                    placeholder="Введите пароль">
+                            <button type="button" class="btn btn-outline-secondary toggle-password" data-target="password">
+                                <i class="fas fa-eye"></i>
+                            </button>
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary w-100">
@@ -39,9 +42,22 @@
 <style>
 .toggle-password {
     border-left: none;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 .toggle-password:hover {
     background-color: #e9ecef;
+}
+
+/* Стили для темной темы */
+[data-theme="dark"] .toggle-password {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #f8f9fa;
+}
+
+[data-theme="dark"] .toggle-password:hover {
+    background-color: #6c757d;
 }
 </style>
 

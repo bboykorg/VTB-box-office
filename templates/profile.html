@@ -7,8 +7,16 @@
     <div class="col-lg-8 mx-auto">
         <!-- Информация о пользователе -->
         <div class="card shadow mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="mb-0"><i class="fas fa-user me-2"></i>Информация о пользователе</h4>
+                <div>
+                    <a href="{{ url_for('edit_profile') }}" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="fas fa-edit me-1"></i>Редактировать
+                    </a>
+                    <a href="{{ url_for('change_password') }}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-key me-1"></i>Сменить пароль
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -51,30 +59,104 @@
                         <tbody>
                             {% for transaction in transactions %}
                             <tr>
-                                <td>{{ transaction.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="text-white-dark">{{ transaction.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
                                 <td>
                                     {% if transaction.type == 'deposit' %}
                                         <span class="badge bg-success">Пополнение</span>
                                     {% elif transaction.type == 'withdraw' %}
-                                        <span class="badge bg-warning">Снятие</span>
+                                        <span class="badge bg-purple">Снятие</span>
                                     {% else %}
                                         <span class="badge bg-primary">Перевод</span>
                                     {% endif %}
                                 </td>
-                                <td class="{{ 'text-success' if transaction.type == 'deposit' else 'text-danger' }}">
+                                <td class="
+                                    {% if transaction.type == 'deposit' %}text-success
+                                    {% elif transaction.type == 'withdraw' %}text-purple
+                                    {% else %}text-danger{% endif %}">
                                     {{ transaction.amount }} ₽
                                 </td>
-                                <td>{{ transaction.description }}</td>
+                                <td class="text-white-dark">{{ transaction.description }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
                 {% else %}
-                <p class="text-muted text-center">Нет операций</p>
+                <p class="text-white-dark text-center">Нет операций</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Фиолетовый цвет для снятий */
+.bg-purple {
+    background-color: #6f42c1 !important;
+}
+
+.text-purple {
+    color: #6f42c1 !important;
+}
+
+/* Белый текст в темной теме для всех элементов */
+[data-theme="dark"] .text-white-dark {
+    color: #ffffff !important;
+}
+
+/* Светлая тема - обычный цвет */
+[data-theme="light"] .text-white-dark {
+    color: #212529 !important;
+}
+
+/* Улучшенные стили для таблицы в темной теме */
+[data-theme="dark"] .table {
+    color: #ffffff !important;
+    border-color: #495057;
+}
+
+[data-theme="dark"] .table th {
+    color: #ffffff !important;
+    border-color: #495057;
+}
+
+[data-theme="dark"] .table td {
+    color: #ffffff !important;
+    border-color: #495057;
+}
+
+[data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .table-striped tbody tr:nth-of-type(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="dark"] .table-striped tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Цвета для статусных текстов (оставляем как есть в темной теме) */
+[data-theme="dark"] .text-success {
+    color: #75b798 !important;
+}
+
+[data-theme="dark"] .text-danger {
+    color: #ea868f !important;
+}
+
+[data-theme="dark"] .text-purple {
+    color: #b197fc !important;
+}
+
+/* Стили для карточки с информацией о пользователе */
+[data-theme="dark"] .card-body p {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .card-body strong {
+    color: #ffffff !important;
+}
+</style>
 {% endblock %}

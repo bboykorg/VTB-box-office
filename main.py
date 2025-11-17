@@ -5,7 +5,7 @@ import re
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from mistralai import Mistral
 from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.exc import IntegrityError
@@ -13,6 +13,16 @@ import requests
 
 OLLAMA_URL = "http://localhost:11434"
 MODEL_NAME = "deepseek-r1:8b"
+
+api_key = os.environ.get("API_KEY")
+
+if not api_key:
+    raise RuntimeError("API_KEY должен быть задан в окружении")
+
+model1 = "mistral-large-latest"
+model2 = "mistral-tiny"
+
+client1 = Mistral(api_key=api_key)
 
 app = Flask(__name__)
 app.secret_key = environ.get("APP_SECRET", "dev-secret-change-in-prod")
@@ -34,7 +44,7 @@ class User(Base, UserMixin):
     balance = Column(Float, default=0.0)
     is_admin = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    phone_number = Column(String(20),nullable=False)
+    phone_number = Column(String(20), nullable=False)
 
     # Явно указываем foreign_keys для отношений
     transactions = relationship(
@@ -116,6 +126,7 @@ def get_user_info():
         offset_hours = 3
         country = "RU"
         time_format = "%d %B %Y %H:%M MSK"
+
         now = datetime.utcnow() + timedelta(hours=offset_hours)
         current_time = now.strftime(time_format)
 
@@ -159,9 +170,11 @@ def register():
         password = request.form["password"]
         confirm_password = request.form.get("confirm_password", "")
 
+        # Проверка совпадения паролей
         if password != confirm_password:
             return render_template("register.html", message="Пароли не совпадают")
 
+        # Проверка длины пароля
         if len(password) < 4:
             return render_template("register.html", message="Пароль должен содержать не менее 4 символов")
 
@@ -196,7 +209,97 @@ def profile():
     transactions = db.query(Transaction).filter_by(user_id=current_user.id).order_by(
         Transaction.timestamp.desc()).limit(10).all()
 
-    return render_template("profile.html", user=current_user, transactions=transactions, phone_number=current_user.phone_number)
+    return render_template("profile.html", user=current_user, transactions=transactions,
+                           phone_number=current_user.phone_number)
+
+
+# Добавим эти маршруты в app.py после существующих маршрутов
+
+@app.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    if request.method == "POST":
+        username = request.form["username"].strip()
+        phone_number = request.form["phone"].strip()
+        current_password = request.form["current_password"]
+
+        db = next(get_db())
+        user = db.query(User).get(current_user.id)
+
+        # Проверка текущего пароля
+        if not user.check_password(current_password):
+            flash("Неверный текущий пароль", "danger")
+            return redirect(url_for("edit_profile"))
+
+        # Проверка уникальности имени пользователя
+        if username != user.username:
+            existing_user = db.query(User).filter_by(username=username).first()
+            if existing_user and existing_user.id != user.id:
+                flash("Имя пользователя уже занято", "danger")
+                return redirect(url_for("edit_profile"))
+            user.username = username
+
+        # Проверка уникальности номера телефона
+        normalized_phone = normalize_phone_number(phone_number)
+        if not normalized_phone:
+            flash("Неверный формат номера телефона", "danger")
+            return redirect(url_for("edit_profile"))
+
+        if normalized_phone != user.phone_number:
+            existing_phone = db.query(User).filter_by(phone_number=normalized_phone).first()
+            if existing_phone and existing_phone.id != user.id:
+                flash("Номер телефона уже используется", "danger")
+                return redirect(url_for("edit_profile"))
+            user.phone_number = normalized_phone
+
+        try:
+            db.commit()
+            flash("Профиль успешно обновлен", "success")
+            return redirect(url_for("profile"))
+        except IntegrityError:
+            db.rollback()
+            flash("Ошибка при обновлении профиля", "danger")
+
+    return render_template("edit_profile.html")
+
+
+@app.route("/profile/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    if request.method == "POST":
+        current_password = request.form["current_password"]
+        new_password = request.form["new_password"]
+        confirm_password = request.form["confirm_password"]
+
+        db = next(get_db())
+        user = db.query(User).get(current_user.id)
+
+        # Проверка текущего пароля
+        if not user.check_password(current_password):
+            flash("Неверный текущий пароль", "danger")
+            return redirect(url_for("change_password"))
+
+        # Проверка совпадения новых паролей
+        if new_password != confirm_password:
+            flash("Новые пароли не совпадают", "danger")
+            return redirect(url_for("change_password"))
+
+        # Проверка длины нового пароля
+        if len(new_password) < 4:
+            flash("Пароль должен содержать не менее 4 символов", "danger")
+            return redirect(url_for("change_password"))
+
+        user.set_password(new_password)
+
+        try:
+            db.commit()
+            flash("Пароль успешно изменен", "success")
+            return redirect(url_for("profile"))
+        except Exception as e:
+            db.rollback()
+            flash("Ошибка при изменении пароля", "danger")
+
+    return render_template("change_password.html")
 
 
 @app.route("/deposit", methods=["GET", "POST"])
@@ -403,7 +506,40 @@ def find_user_by_phone():
         return jsonify({"error": "Пользователь не найден"}), 404
 
 
+@app.route("/confirm-transfer", methods=["GET", "POST"])
+@login_required
+def confirm_transfer():
+    if request.method == "POST":
+        try:
+            recipient_id = request.form.get("recipient_id")
+            phone = request.form.get("phone")
+            amount = float(request.form.get("amount"))
+            description = request.form.get("description", "")
 
+            db = next(get_db())
+            recipient = db.query(User).get(recipient_id)
+
+            if not recipient:
+                flash("Получатель не найден", "danger")
+                return redirect(url_for("transfer"))
+
+            # Проверяем баланс
+            if amount > current_user.balance:
+                flash("Недостаточно средств", "danger")
+                return redirect(url_for("transfer"))
+
+            return render_template("confirm_transfer.html",
+                                   recipient_username=recipient.username,
+                                   recipient_phone=phone,
+                                   recipient_id=recipient_id,
+                                   amount=amount,
+                                   description=description)
+
+        except Exception as e:
+            flash(f"Ошибка: {str(e)}", "danger")
+            return redirect(url_for("transfer"))
+
+    return redirect(url_for("transfer"))
 
 
 @app.route("/execute-transfer", methods=["POST"])
@@ -429,7 +565,7 @@ def execute_transfer():
                 flash("Получатель не найден", "danger")
                 return redirect(url_for("transfer"))
 
-            # Повторная проверка баланса
+            # Повторная проверка баланс
             if amount > sender.balance:
                 flash("Недостаточно средств", "danger")
                 return redirect(url_for("transfer"))
@@ -474,6 +610,7 @@ def execute_transfer():
 
     return redirect(url_for("transfer"))
 
+
 @app.route("/admin")
 @login_required
 def admin():
@@ -486,12 +623,17 @@ def admin():
     return render_template("admin.html", transactions=transactions, users=users)
 
 
+@app.route('/currency')
+def currency():
+    return render_template('currency.html')
+
+
 @app.route('/deposit_calculator')
 def deposit_calculator():
     user_info = get_user_info()
     return render_template('deposit_calculator.html',
-                         current_time=user_info["current_time"],
-                         country=user_info["country"])
+                           current_time=user_info["current_time"],
+                           country=user_info["country"])
 
 
 def build_prompt(outcome):
@@ -645,6 +787,7 @@ def build_prompt(outcome):
 Ответ (кратко и по делу):""").format(outcome=outcome)
     return prompt
 
+
 def sanitize_ai_text(text, max_len=4000):
     if not text:
         return ""
@@ -685,12 +828,6 @@ def sanitize_ai_text(text, max_len=4000):
 def query_ollama(prompt):
     """Функция для отправки запросов в Ollama"""
     try:
-        # Сначала проверим доступность Ollama
-        health_check = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
-        if health_check.status_code != 200:
-            print(f"Ollama не доступен. Status: {health_check.status_code}")
-            return None
-
         payload = {
             "model": MODEL_NAME,
             "prompt": prompt,
@@ -705,7 +842,7 @@ def query_ollama(prompt):
         response = requests.post(
             f"{OLLAMA_URL}/api/generate",
             json=payload,
-            timeout=60  # Увеличим таймаут
+            timeout=30  # таймаут 30 секунд
         )
 
         if response.status_code == 200:
@@ -713,17 +850,67 @@ def query_ollama(prompt):
             return result.get("response", "").strip()
         else:
             print(f"Ошибка Ollama: {response.status_code} - {response.text}")
-            return f"Ошибка сервера AI: {response.status_code}"
+            return None
 
     except requests.exceptions.ConnectionError:
-        print("Не удалось подключиться к Ollama. Убедитесь, что Ollama запущен на localhost:11434")
+        print("Не удалось подключиться к Ollama. Убедитесь, что Ollama запущен.")
         return None
     except requests.exceptions.Timeout:
         print("Таймаут при запросе к Ollama.")
-        return "Таймаут при обращении к AI. Попробуйте еще раз."
+        return None
     except Exception as e:
         print(f"Неожиданная ошибка при запросе к Ollama: {e}")
-        return f"Ошибка: {str(e)}"
+        return None
+
+
+def query_mistral(prompt):
+    """Функция для отправки запросов в Mistral"""
+    try:
+        response = client1.chat.complete(
+            model=model2,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7,
+            max_tokens=1000,
+            top_p=0.9
+        )
+
+        if response and response.choices:
+            return response.choices[0].message.content.strip()
+        else:
+            print("Пустой ответ от Mistral")
+            return None
+
+    except Exception as e:
+        print(f"Ошибка при запросе к Mistral: {e}")
+        return None
+
+
+def get_ai_response(prompt):
+    """Основная функция для получения ответа от AI - сначала пробует Ollama, потом Mistral"""
+    # Сначала пробуем Ollama
+    print("Попытка подключения к Ollama...")
+    response = query_ollama(prompt)
+
+    if response:
+        print("Успешно получен ответ от Ollama")
+        return response
+
+    # Если Ollama не доступен, пробуем Mistral
+    print("Ollama не доступен, пробуем Mistral...")
+    response = query_mistral(prompt)
+
+    if response:
+        print("Успешно получен ответ от Mistral")
+        return response
+
+    # Если оба сервиса не доступны
+    print("Оба AI сервиса не доступны")
+    return "Не удалось получить ответ от AI сервисов. Пожалуйста, попробуйте позже."
 
 
 @app.route("/run-ai", methods=["POST"])
@@ -731,8 +918,7 @@ def run_ai():
     data = request.get_json() or {}
     outcomes = data.get("outcome", [])
 
-    print(f"[run-ai] Получен запрос: {data}")
-
+    # Если передан массив, берем первый элемент, иначе работаем со строкой
     if isinstance(outcomes, list) and outcomes:
         outcome = outcomes[0]
     elif isinstance(outcomes, str):
@@ -744,32 +930,29 @@ def run_ai():
 
     if outcome:
         prompt = build_prompt(outcome)
-        print(f"[run-ai] Сгенерирован промпт: {prompt[:100]}...")
-
         ai_text = ""
 
         try:
-            ai_text_raw = query_ollama(prompt)
-            print(f"[run-ai] Получен ответ от Ollama: {ai_text_raw[:100] if ai_text_raw else 'None'}")
+            ai_text_raw = get_ai_response(prompt)
 
             if ai_text_raw:
                 ai_text = sanitize_ai_text(ai_text_raw)
-                print(f"[run-ai] Успешно обработан запрос: {outcome}")
+                print(f"[run-ai] succeeded for outcome: {outcome}")
             else:
-                ai_text = "Не удалось получить ответ от AI. Проверьте, запущен ли Ollama на localhost:11434"
-                print(f"[run-ai] Пустой ответ от Ollama для запроса: {outcome}")
+                ai_text = "Не удалось получить ответ от AI сервисов."
+                print(f"[run-ai] failed for outcome: {outcome}")
 
         except Exception as e:
-            print(f"[run-ai] Ошибка для запроса {outcome}: {e}")
-            ai_text = f"Ошибка при получении ответа от AI: {str(e)}"
+            print(f"[run-ai] error for outcome {outcome}: {e}")
+            ai_text = "Ошибка при получении ответа от AI. Попробуйте позже."
 
         results.append({
             "outcome": outcome,
             "result": ai_text
         })
 
-    print(f"[run-ai] Возвращаем результат: {results}")
     return jsonify({"results": results}), 200
+
 
 with app.app_context():
     db = SessionLocal()
@@ -793,4 +976,4 @@ with app.app_context():
         db.close()
 
 if __name__ == "__main__":
-    app.run(port=5001, debug=True)
+    app.run(port=5000, debug=True)

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Подтверждение перевода - ВТБ Онлайн-касса{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Подтверждение перевода</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Проверьте данные перевода</strong>
+                </div>
+                
+                <div class="transfer-details mb-4">
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Отправитель:</strong></div>
+                        <div class="col-6">{{ current_user.username }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Получатель:</strong></div>
+                        <div class="col-6">{{ recipient_username }} ({{ recipient_phone }})</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Сумма:</strong></div>
+                        <div class="col-6"><span class="fs-5 text-primary">{{ "%.2f"|format(amount) }} ₽</span></div>
+                    </div>
+                    {% if description %}
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Описание:</strong></div>
+                        <div class="col-6">{{ description }}</div>
+                    </div>
+                    {% endif %}
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Комиссия:</strong></div>
+                        <div class="col-6">0.00 ₽</div>
+                    </div>
+                    <hr>
+                    <div class="row mb-3">
+                        <div class="col-6"><strong>Итого к списанию:</strong></div>
+                        <div class="col-6"><span class="fs-5 text-danger">{{ "%.2f"|format(amount) }} ₽</span></div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('execute_transfer') }}">
+                    <input type="hidden" name="recipient_id" value="{{ recipient_id }}">
+                    <input type="hidden" name="amount" value="{{ amount }}">
+                    <input type="hidden" name="description" value="{{ description }}">
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Подтвердите пароль:</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password" required
+                                   placeholder="Введите ваш пароль">
+                            <button type="button" class="btn btn-outline-secondary toggle-password"
+                                    data-target="password">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-check-circle me-2"></i>Подтвердить перевод
+                        </button>
+                        <a href="{{ url_for('transfer') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Вернуться назад
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.transfer-details {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для переключения видимости пароля
+    document.querySelectorAll('.toggle-password').forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const targetInput = document.getElementById(targetId);
+            const icon = this.querySelector('i');
+
+            if (targetInput.type === 'password') {
+                targetInput.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                targetInput.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

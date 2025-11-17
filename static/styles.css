@@ -1,14 +1,11 @@
-/* ===== VTB BLUE COLOR SCHEME ===== */
+/* ===== VTB COLOR SCHEME ===== */
 :root {
-    --primary-blue: #1e3c72;
-    --secondary-blue: #2a5298;
-    --light-blue: #4a76c6;
-    --dark-blue: #0f2a5c;
-    --accent-blue: #3a6fd9;
-    --success-blue: #28a745;
-    --warning-blue: #ffc107;
-    --danger-blue: #dc3545;
-    --info-blue: #17a2b8;
+    --vtb-blue: #0033a0;
+    --vtb-light-blue: #0054a6;
+    --vtb-red: #d52b1e;
+    --vtb-dark-blue: #002d72;
+    --vtb-gray: #f5f5f5;
+    --vtb-text: #333333;
 }
 
 /* ===== FIX FOOTER POSITION ===== */
@@ -23,8 +20,8 @@ body {
     flex-direction: column;
     min-height: 100vh;
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    color: #333333;
+    background-color: var(--vtb-gray);
+    color: var(--vtb-text);
 }
 
 .container {
@@ -34,7 +31,7 @@ body {
 
 /* ===== HEADER STYLES ===== */
 header {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+    background: linear-gradient(135deg, var(--vtb-blue) 0%, var(--vtb-light-blue) 100%);
     color: white;
     padding: 1rem 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -53,7 +50,7 @@ header {
 
 /* ===== ADMIN STYLES ===== */
 .admin-banner {
-    background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
+    background-color: var(--vtb-red);
     color: white;
     padding: 10px 0;
     text-align: center;
@@ -67,7 +64,7 @@ header {
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--accent-blue);
+    border-left: 4px solid var(--vtb-red);
 }
 
 /* ===== CURRENCY STYLES ===== */
@@ -77,7 +74,7 @@ header {
     padding: 15px;
     margin-bottom: 20px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--primary-blue);
+    border-left: 4px solid var(--vtb-blue);
 }
 
 .currency-rate {
@@ -85,182 +82,184 @@ header {
     justify-content: space-between;
     margin: 8px 0;
     padding: 8px;
-    background: #f8f9fa;
+    background: var(--vtb-gray);
     border-radius: 4px;
 }
 
 .currency-up {
-    color: var(--success-blue);
+    color: #28a745;
 }
 
 .currency-down {
-    color: var(--danger-blue);
+    color: var(--vtb-red);
+}
+
+/* ===== DEPOSIT CALCULATOR ===== */
+.deposit-calculator {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #28a745;
+}
+
+.calculator-form {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--vtb-dark-blue);
+}
+
+.form-group input, .form-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.calculate-btn {
+    background: var(--vtb-blue);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.calculate-btn:hover {
+    background: var(--vtb-light-blue);
+}
+
+.result {
+    background: var(--vtb-gray);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
 }
 
 /* ===== BUTTON STYLES ===== */
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
-    border: none;
+    background-color: var(--vtb-blue);
+    border-color: var(--vtb-blue);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, var(--secondary-blue) 0%, var(--primary-blue) 100%);
-    transform: translateY(-1px);
-}
-
-.btn-success {
-    background: rgba(129, 0, 235, 1);
-    border: none;
-}
-
-.btn-warning {
-    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-    border: none;
-}
-
-.btn-info {
-    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
-    border: none;
+    background-color: var(--vtb-light-blue);
+    border-color: var(--vtb-light-blue);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-    border: none;
+    background-color: var(--vtb-red);
+    border-color: var(--vtb-red);
 }
 
 /* ===== CARD STYLES ===== */
 .card {
     border: none;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
-    border-radius: 12px;
-    overflow: hidden;
 }
 
 .card-header {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%) !important;
+    background-color: var(--vtb-blue);
     color: white;
     font-weight: bold;
-    border-bottom: none;
 }
 
+footer {
+    background-color: var(--vtb-dark-blue);
+    color: white;
+    padding: 20px 0;
+    margin-top: auto;
+    text-align: center;
+}
 .balance-card {
-    border-left: 4px solid var(--primary-blue);
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-left: 4px solid var(--vtb-blue);
 }
 
 .operation-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.2s;
     border-left: 4px solid #ddd;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
 }
 
 .operation-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .operation-card:nth-child(1) {
-    border-left-color: var(--success-blue);
+    border-left-color: #28a745;
 }
 
 .operation-card:nth-child(2) {
-    border-left-color: var(--warning-blue);
+    border-left-color: #ffc107;
 }
 
 .operation-card:nth-child(3) {
-    border-left-color: var(--primary-blue);
+    border-left-color: var(--vtb-blue);
 }
 
 .operation-card:nth-child(4) {
-    border-left-color: var(--info-blue);
+    border-left-color: #17a2b8;
 }
 
-/* ===== THEME SWITCHER ===== */
-.theme-switcher {
-    background: transparent;
-    border: 2px solid rgba(255,255,255,0.3);
-    color: white;
-    border-radius: 20px;
-    padding: 5px 15px;
-    transition: all 0.3s ease;
-}
-
-.theme-switcher:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.5);
-}
-
-/* ===== FORM STYLES ===== */
-.form-control, .form-select {
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 10px 15px;
-    transition: all 0.3s ease;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 0.2rem rgba(58, 111, 217, 0.25);
-}
-
-/* ===== TABLE STYLES ===== */
-.table {
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.table th {
-    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+.calculate-btn-wide {
+    background: var(--vtb-blue);
     color: white;
     border: none;
-}
-
-.table td {
-    border-color: #dee2e6;
-}
-
-/* ===== ALERT STYLES ===== */
-.alert {
+    padding: 15px 30px;
     border-radius: 8px;
-    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    width: 100%;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 51, 160, 0.3);
 }
 
-.alert-info {
-    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-    color: var(--dark-blue);
+.calculate-btn-wide:hover {
+    background: var(--vtb-light-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 51, 160, 0.4);
 }
 
-.alert-success {
-    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-    color: #155724;
+.calculate-btn-wide:active {
+    transform: translateY(0);
 }
 
-.alert-warning {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    color: #856404;
+.deposit-calculator {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #28a745;
 }
 
-.alert-danger {
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-    color: #721c24;
+.calculator-form {
+    margin-bottom: 0;
 }
 
-/* ===== FOOTER ===== */
-footer {
-    background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
-    color: white;
-    padding: 20px 0;
-    margin-top: auto;
+.form-control {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 12px;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .navbar-brand {
-        font-size: 1.2rem;
-    }
-
-    .operation-card {
-        margin-bottom: 15px;
-    }
+.result {
+    background: var(--vtb-gray);
+    padding: 20px;
+    border-radius: 8px;
+    height: 100%;
 }
