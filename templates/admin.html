@@ -6,14 +6,14 @@
 <div class="row">
     <div class="col-12">
         <div class="card shadow mb-4">
-            <div class="card-header bg-danger text-white">
+            <div class="card-header admin-header">
                 <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Административная панель</h4>
             </div>
             <div class="card-body">
                 <!-- Статистика -->
                 <div class="row mb-4">
                     <div class="col-md-3">
-                        <div class="card bg-primary text-white">
+                        <div class="card admin-stat-card text-white">
                             <div class="card-body text-center">
                                 <h5>Пользователей</h5>
                                 <h3>{{ users|length }}</h3>
@@ -21,7 +21,7 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-success text-white">
+                        <div class="card admin-stat-card text-white">
                             <div class="card-body text-center">
                                 <h5>Транзакций</h5>
                                 <h3>{{ transactions|length }}</h3>
@@ -29,15 +29,15 @@
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-info text-white">
+                        <div class="card admin-stat-card text-white">
                             <div class="card-body text-center">
                                 <h5>Общий баланс</h5>
-                                <h3>{{ "%.2f"|format(users|sum(attribute='balance')) }} ₽</h3>
+                                <h3 class="total-balance">{{ "%.2f"|format(users|sum(attribute='balance')) }} ₽</h3>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <div class="card bg-warning text-white">
+                        <div class="card admin-stat-card text-white">
                             <div class="card-body text-center">
                                 <h5>Администраторов</h5>
                                 <h3>{{ users|selectattr('is_admin')|list|length }}</h3>
@@ -47,9 +47,9 @@
                 </div>
 
                 <!-- Пользователи -->
-                <h5 class="mb-3"><i class="fas fa-users me-2"></i>Пользователи системы</h5>
+                <h5 class="mb-3 admin-section-title"><i class="fas fa-users me-2"></i>Пользователи системы</h5>
                 <div class="table-responsive mb-5">
-                    <table class="table table-striped">
+                    <table class="table table-striped admin-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -63,16 +63,16 @@
                             {% for user in users %}
                             <tr>
                                 <td>{{ user.id }}</td>
-                                <td>{{ user.username }}</td>
-                                <td>{{ "%.2f"|format(user.balance) }} ₽</td>
+                                <td class="admin-text">{{ user.username }}</td>
+                                <td class="balance-cell">{{ "%.2f"|format(user.balance) }} ₽</td>
                                 <td>
                                     {% if user.is_admin %}
-                                        <span class="badge bg-danger">Админ</span>
+                                        <span class="badge admin-badge">Админ</span>
                                     {% else %}
-                                        <span class="badge bg-success">Пользователь</span>
+                                        <span class="badge user-badge">Пользователь</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="admin-text">{{ user.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -80,9 +80,9 @@
                 </div>
 
                 <!-- Все транзакции -->
-                <h5 class="mb-3"><i class="fas fa-list-alt me-2"></i>Все транзакции</h5>
+                <h5 class="mb-3 admin-section-title"><i class="fas fa-list-alt me-2"></i>Все транзакции</h5>
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-striped admin-table">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -98,28 +98,28 @@
                             {% for transaction in transactions %}
                             <tr>
                                 <td>{{ transaction.id }}</td>
-                                <td>{{ transaction.user.username }}</td>
+                                <td class="admin-text">{{ transaction.user.username }}</td>
                                 <td>
                                     {% if transaction.type == 'deposit' %}
-                                        <span class="badge bg-success">Пополнение</span>
+                                        <span class="badge deposit-badge">Пополнение</span>
                                     {% elif transaction.type == 'withdraw' %}
-                                        <span class="badge bg-warning">Снятие</span>
+                                        <span class="badge withdraw-badge">Снятие</span>
                                     {% else %}
-                                        <span class="badge bg-primary">Перевод</span>
+                                        <span class="badge transfer-badge">Перевод</span>
                                     {% endif %}
                                 </td>
-                                <td class="{{ 'text-success' if transaction.type == 'deposit' else 'text-danger' }}">
+                                <td class="transaction-amount {{ 'deposit-amount' if transaction.type == 'deposit' else 'withdraw-amount' }}">
                                     {{ transaction.amount }} ₽
                                 </td>
-                                <td>
+                                <td class="admin-text">
                                     {% if transaction.target %}
                                         {{ transaction.target.username }}
                                     {% else %}
                                         -
                                     {% endif %}
                                 </td>
-                                <td>{{ transaction.description }}</td>
-                                <td>{{ transaction.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td class="admin-text">{{ transaction.description }}</td>
+                                <td class="admin-text">{{ transaction.timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -129,4 +129,154 @@
         </div>
     </div>
 </div>
+
+<style>
+/* Заголовок админ-панели */
+.admin-header {
+    background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%) !important;
+    color: white;
+}
+
+/* Карточки статистики - одинаковый цвет для всех */
+.admin-stat-card {
+    background: linear-gradient(135deg, #8ba9f0 0%, #6c8dd3 100%);
+    border: none;
+}
+
+/* Темная тема для карточек статистики */
+[data-theme="dark"] .admin-stat-card {
+    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+}
+
+/* Заголовки разделов */
+.admin-section-title {
+    color: #4a76c6;
+    border-bottom: 2px solid #8ba9f0;
+    padding-bottom: 10px;
+}
+
+[data-theme="dark"] .admin-section-title {
+    color: #8ba9f0;
+    border-bottom-color: #4a76c6;
+}
+
+/* Таблицы */
+.admin-table th {
+    background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%);
+    color: white;
+    border: none;
+}
+
+[data-theme="dark"] .admin-table th {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+.admin-table td {
+    border-color: #dee2e6;
+}
+
+/* Текст в таблицах с адаптацией под тему */
+.admin-text {
+    color: var(--text-color);
+    transition: color 0.3s ease;
+}
+
+/* Бейджи - светло-синие тона */
+.admin-badge {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+    color: white;
+}
+
+.user-badge {
+    background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%);
+    color: white;
+}
+
+.deposit-badge {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+    color: white;
+}
+
+.withdraw-badge {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+    color: white;
+}
+
+.transfer-badge {
+    background: linear-gradient(135deg, #8ba9f0 0%, #6c8dd3 100%);
+    color: white;
+}
+
+/* Темная тема для бейджей */
+[data-theme="dark"] .admin-badge {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+[data-theme="dark"] .user-badge {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+}
+
+[data-theme="dark"] .deposit-badge {
+    background: linear-gradient(135deg, #58d68d 0%, #27ae60 100%);
+}
+
+[data-theme="dark"] .withdraw-badge {
+    background: linear-gradient(135deg, #f7dc6f 0%, #f39c12 100%);
+    color: #212529;
+}
+
+[data-theme="dark"] .transfer-badge {
+    background: linear-gradient(135deg, #a8c2ff 0%, #8ba9f0 100%);
+    color: white;
+}
+
+/* Суммы транзакций - синие тона */
+.deposit-amount {
+    color: #27ae60 !important;
+    font-weight: bold;
+}
+
+.withdraw-amount {
+    color: #e74c3c !important;
+    font-weight: bold;
+}
+
+.balance-cell {
+    color: #4a76c6 !important;
+    font-weight: bold;
+}
+
+.total-balance {
+    color: white !important;
+}
+
+/* Темная тема для сумм */
+[data-theme="dark"] .deposit-amount {
+    color: #58d68d !important;
+}
+
+[data-theme="dark"] .withdraw-amount {
+    color: #ec7063 !important;
+}
+
+[data-theme="dark"] .balance-cell {
+    color: #8ba9f0 !important;
+}
+
+/* Анимации для карточек статистики */
+.admin-stat-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Общий стиль для текста в админ-панели */
+.admin-table td:not(.balance-cell):not(.transaction-amount) {
+    color: var(--text-color);
+    transition: color 0.3s ease;
+}
+</style>
 {% endblock %}

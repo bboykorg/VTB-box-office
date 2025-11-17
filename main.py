@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, relationship
 from sqlalchemy.exc import IntegrityError
 import requests
 
-OLLAMA_URL = "http://localhost:11434"  # URL по умолчанию для Ollama
+OLLAMA_URL = "http://localhost:11434"
 MODEL_NAME = "deepseek-r1:8b"
 
 app = Flask(__name__)
@@ -105,15 +105,23 @@ def get_db():
 def get_user_info():
     try:
         from zoneinfo import ZoneInfo
-        now = datetime.now(ZoneInfo("Europe/Amsterdam"))
+        timezone = ZoneInfo("Europe/Moscow")
+        country = "RU"
+        time_format = "%d %B %Y %H:%M MSK"
+        now = datetime.now(timezone)
+        current_time = now.strftime(time_format)
+
     except Exception:
-        # Fallback для Windows без tzdata
         from datetime import timedelta
-        now = datetime.utcnow() + timedelta(hours=1)
+        offset_hours = 3
+        country = "RU"
+        time_format = "%d %B %Y %H:%M MSK"
+        now = datetime.utcnow() + timedelta(hours=offset_hours)
+        current_time = now.strftime(time_format)
 
     return {
-        "current_time": now.strftime("%B %d, %Y %I:%M %p CET"),
-        "country": "NL"
+        "current_time": current_time,
+        "country": country
     }
 
 
@@ -151,11 +159,9 @@ def register():
         password = request.form["password"]
         confirm_password = request.form.get("confirm_password", "")
 
-        # Проверка совпадения паролей
         if password != confirm_password:
             return render_template("register.html", message="Пароли не совпадают")
 
-        # Проверка длины пароля
         if len(password) < 4:
             return render_template("register.html", message="Пароль должен содержать не менее 4 символов")
 
@@ -397,40 +403,7 @@ def find_user_by_phone():
         return jsonify({"error": "Пользователь не найден"}), 404
 
 
-@app.route("/confirm-transfer", methods=["GET", "POST"])
-@login_required
-def confirm_transfer():
-    if request.method == "POST":
-        try:
-            recipient_id = request.form.get("recipient_id")
-            phone = request.form.get("phone")
-            amount = float(request.form.get("amount"))
-            description = request.form.get("description", "")
 
-            db = next(get_db())
-            recipient = db.query(User).get(recipient_id)
-
-            if not recipient:
-                flash("Получатель не найден", "danger")
-                return redirect(url_for("transfer"))
-
-            # Проверяем баланс
-            if amount > current_user.balance:
-                flash("Недостаточно средств", "danger")
-                return redirect(url_for("transfer"))
-
-            return render_template("confirm_transfer.html",
-                                   recipient_username=recipient.username,
-                                   recipient_phone=phone,
-                                   recipient_id=recipient_id,
-                                   amount=amount,
-                                   description=description)
-
-        except Exception as e:
-            flash(f"Ошибка: {str(e)}", "danger")
-            return redirect(url_for("transfer"))
-
-    return redirect(url_for("transfer"))
 
 
 @app.route("/execute-transfer", methods=["POST"])
@@ -501,7 +474,6 @@ def execute_transfer():
 
     return redirect(url_for("transfer"))
 
-
 @app.route("/admin")
 @login_required
 def admin():
@@ -513,9 +485,6 @@ def admin():
     users = db.query(User).all()
     return render_template("admin.html", transactions=transactions, users=users)
 
-@app.route('/currency')
-def currency():
-    return render_template('currency.html')
 
 @app.route('/deposit_calculator')
 def deposit_calculator():
@@ -716,6 +685,12 @@ def sanitize_ai_text(text, max_len=4000):
 def query_ollama(prompt):
     """Функция для отправки запросов в Ollama"""
     try:
+        # Сначала проверим доступность Ollama
+        health_check = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        if health_check.status_code != 200:
+            print(f"Ollama не доступен. Status: {health_check.status_code}")
+            return None
+
         payload = {
             "model": MODEL_NAME,
             "prompt": prompt,
@@ -730,7 +705,7 @@ def query_ollama(prompt):
         response = requests.post(
             f"{OLLAMA_URL}/api/generate",
             json=payload,
-            timeout=30  # таймаут 30 секунд
+            timeout=60  # Увеличим таймаут
         )
 
         if response.status_code == 200:
@@ -738,17 +713,17 @@ def query_ollama(prompt):
             return result.get("response", "").strip()
         else:
             print(f"Ошибка Ollama: {response.status_code} - {response.text}")
-            return None
+            return f"Ошибка сервера AI: {response.status_code}"
 
     except requests.exceptions.ConnectionError:
-        print("Не удалось подключиться к Ollama. Убедитесь, что Ollama запущен.")
+        print("Не удалось подключиться к Ollama. Убедитесь, что Ollama запущен на localhost:11434")
         return None
     except requests.exceptions.Timeout:
         print("Таймаут при запросе к Ollama.")
-        return None
+        return "Таймаут при обращении к AI. Попробуйте еще раз."
     except Exception as e:
         print(f"Неожиданная ошибка при запросе к Ollama: {e}")
-        return None
+        return f"Ошибка: {str(e)}"
 
 
 @app.route("/run-ai", methods=["POST"])
@@ -756,7 +731,8 @@ def run_ai():
     data = request.get_json() or {}
     outcomes = data.get("outcome", [])
 
-    # Если передан массив, берем первый элемент, иначе работаем со строкой
+    print(f"[run-ai] Получен запрос: {data}")
+
     if isinstance(outcomes, list) and outcomes:
         outcome = outcomes[0]
     elif isinstance(outcomes, str):
@@ -768,27 +744,31 @@ def run_ai():
 
     if outcome:
         prompt = build_prompt(outcome)
+        print(f"[run-ai] Сгенерирован промпт: {prompt[:100]}...")
+
         ai_text = ""
 
         try:
             ai_text_raw = query_ollama(prompt)
+            print(f"[run-ai] Получен ответ от Ollama: {ai_text_raw[:100] if ai_text_raw else 'None'}")
 
             if ai_text_raw:
                 ai_text = sanitize_ai_text(ai_text_raw)
-                print(f"[run-ai] succeeded for outcome: {outcome}")
+                print(f"[run-ai] Успешно обработан запрос: {outcome}")
             else:
-                ai_text = "Не удалось получить ответ от AI. Проверьте, запущен ли Ollama."
-                print(f"[run-ai] failed for outcome: {outcome}")
+                ai_text = "Не удалось получить ответ от AI. Проверьте, запущен ли Ollama на localhost:11434"
+                print(f"[run-ai] Пустой ответ от Ollama для запроса: {outcome}")
 
         except Exception as e:
-            print(f"[run-ai] error for outcome {outcome}: {e}")
-            ai_text = "Ошибка при получении ответа от AI. Попробуйте позже."
+            print(f"[run-ai] Ошибка для запроса {outcome}: {e}")
+            ai_text = f"Ошибка при получении ответа от AI: {str(e)}"
 
         results.append({
             "outcome": outcome,
             "result": ai_text
         })
 
+    print(f"[run-ai] Возвращаем результат: {results}")
     return jsonify({"results": results}), 200
 
 with app.app_context():
@@ -813,4 +793,4 @@ with app.app_context():
         db.close()
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5001, debug=True)

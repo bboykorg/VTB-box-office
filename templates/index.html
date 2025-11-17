@@ -15,28 +15,27 @@
         <div class="card balance-card shadow">
             <div class="card-body text-center">
                 <h5 class="card-title"><i class="fas fa-wallet me-2"></i>Ваш баланс</h5>
-                <h2 class="card-text">{{ "%.2f"|format(current_user.balance) }} ₽</h2>
+                <h2 class="card-text balance-amount">{{ "%.2f"|format(current_user.balance) }} ₽</h2>
             </div>
         </div>
 
-        <!-- Обновленный блок курсов валют в рамке -->
         <div class="card shadow mt-4">
-            <div class="card-header bg-light">
+            <div class="card-header">
                 <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Курсы валют</h5>
             </div>
             <div class="card-body">
                 <div id="currency-rates">
                     <div class="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
                         <span class="fw-bold">USD/RUB</span>
-                        <span class="badge bg-primary fs-6" id="usd-rate">Загрузка...</span>
+                        <span class="badge currency-badge fs-6" id="usd-rate">Загрузка...</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mb-3 p-2 border-bottom">
                         <span class="fw-bold">EUR/RUB</span>
-                        <span class="badge bg-success fs-6" id="eur-rate">Загрузка...</span>
+                        <span class="badge currency-badge fs-6" id="eur-rate">Загрузка...</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center p-2">
                         <span class="fw-bold">CNY/RUB</span>
-                        <span class="badge bg-info fs-6" id="cny-rate">Загрузка...</span>
+                        <span class="badge currency-badge fs-6" id="cny-rate">Загрузка...</span>
                     </div>
                 </div>
                 <div class="mt-3 text-center">
@@ -53,10 +52,12 @@
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
-                        <i class="fas fa-plus-circle fa-3x text-success mb-3"></i>
+                        <i class="fas fa-plus-circle fa-3x operation-icon mb-3"></i>
                         <h5 class="card-title">Пополнить счет</h5>
                         <p class="card-text">Внесите деньги на ваш счет</p>
-                        <a href="{{ url_for('deposit') }}" class="btn btn-success">Пополнить</a>
+                        <a href="{{ url_for('deposit') }}" class="btn btn-operation-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Пополнить
+                        </a>
                     </div>
                 </div>
             </div>
@@ -64,10 +65,12 @@
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
-                        <i class="fas fa-minus-circle fa-3x text-warning mb-3"></i>
+                        <i class="fas fa-minus-circle fa-3x operation-icon mb-3"></i>
                         <h5 class="card-title">Снять средства</h5>
                         <p class="card-text">Снять деньги со счета</p>
-                        <a href="{{ url_for('withdraw') }}" class="btn btn-warning">Снять</a>
+                        <a href="{{ url_for('withdraw') }}" class="btn btn-operation-secondary">
+                            <i class="fas fa-minus-circle me-2"></i>Снять
+                        </a>
                     </div>
                 </div>
             </div>
@@ -75,10 +78,12 @@
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
-                        <i class="fas fa-exchange-alt fa-3x text-primary mb-3"></i>
+                        <i class="fas fa-exchange-alt fa-3x operation-icon mb-3"></i>
                         <h5 class="card-title">Перевод</h5>
                         <p class="card-text">Перевести деньги другому пользователю</p>
-                        <a href="{{ url_for('transfer') }}" class="btn btn-primary">Перевести</a>
+                        <a href="{{ url_for('transfer') }}" class="btn btn-operation-primary">
+                            <i class="fas fa-exchange-alt me-2"></i>Перевести
+                        </a>
                     </div>
                 </div>
             </div>
@@ -86,10 +91,12 @@
             <div class="col-md-6 mb-4">
                 <div class="card operation-card shadow h-100">
                     <div class="card-body text-center">
-                        <i class="fas fa-user fa-3x text-info mb-3"></i>
+                        <i class="fas fa-calculator fa-3x operation-icon mb-3"></i>
                         <h5 class="card-title">Калькулятор вкладов</h5>
                         <p class="card-text">Посчитать выгоду с вашими условиями вклада</p>
-                        <a href="{{ url_for('deposit_calculator') }}" class="btn btn-info">Посчитать</a>
+                        <a href="{{ url_for('deposit_calculator') }}" class="btn btn-operation-secondary">
+                            <i class="fas fa-calculator me-2"></i>Посчитать
+                        </a>
                     </div>
                 </div>
             </div>
@@ -100,11 +107,13 @@
 {% if current_user.is_admin %}
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card border-danger">
+        <div class="card border-primary">
             <div class="card-body text-center">
-                <h5 class="card-title text-danger"><i class="fas fa-shield-alt me-2"></i>Административная панель</h5>
+                <h5 class="card-title admin-panel-title"><i class="fas fa-shield-alt me-2"></i>Административная панель</h5>
                 <p class="card-text">Просмотр всех транзакций и пользователей системы</p>
-                <a href="{{ url_for('admin') }}" class="btn btn-danger">Админ-панель</a>
+                <a href="{{ url_for('admin') }}" class="btn btn-operation-primary">
+                    <i class="fas fa-cogs me-2"></i>Админ-панель
+                </a>
             </div>
         </div>
     </div>
@@ -118,6 +127,125 @@
 .currency-rate-item:hover {
     background-color: #f8f9fa;
     transform: translateX(5px);
+}
+
+/* Стили для баланса */
+.balance-amount {
+    color: var(--primary-blue) !important;
+    font-weight: bold;
+}
+
+/* Стили для курсов валют */
+.currency-badge {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
+    color: white !important;
+}
+
+/* Стили для иконок операций */
+.operation-icon {
+    color: var(--primary-blue) !important;
+}
+
+/* Светлая тема - ТЕМНЫЕ кнопки */
+[data-theme="light"] .btn-operation-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+[data-theme="light"] .btn-operation-secondary {
+    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+/* Темная тема - СВЕТЛЫЕ кнопки */
+[data-theme="dark"] .btn-operation-primary {
+    background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .btn-operation-secondary {
+    background: linear-gradient(135deg, #6c8dd3 0%, #5a7fd9 100%);
+    border: none;
+    color: white;
+    font-weight: 600;
+}
+
+/* Общие стили для кнопок операций */
+.btn-operation-primary,
+.btn-operation-secondary {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 10px 20px;
+}
+
+.btn-operation-primary:hover,
+.btn-operation-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);
+    color: white;
+}
+
+/* Темная тема для иконок */
+[data-theme="dark"] .operation-icon {
+    color: #8ba9f0 !important;
+}
+
+[data-theme="dark"] .balance-amount {
+    color: #8ba9f0 !important;
+}
+
+[data-theme="dark"] .currency-badge {
+    background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%) !important;
+}
+
+/* Границы для карточек */
+.operation-card:nth-child(1) {
+    border-left-color: #1e3c72;
+}
+
+.operation-card:nth-child(2) {
+    border-left-color: #2a5298;
+}
+
+.operation-card:nth-child(3) {
+    border-left-color: #1e3c72;
+}
+
+.operation-card:nth-child(4) {
+    border-left-color: #2a5298;
+}
+
+/* Темная тема для границ карточек */
+[data-theme="dark"] .operation-card:nth-child(1) {
+    border-left-color: #4a76c6;
+}
+
+[data-theme="dark"] .operation-card:nth-child(2) {
+    border-left-color: #6c8dd3;
+}
+
+[data-theme="dark"] .operation-card:nth-child(3) {
+    border-left-color: #4a76c6;
+}
+
+[data-theme="dark"] .operation-card:nth-child(4) {
+    border-left-color: #6c8dd3;
+}
+
+/* Стили для заголовка административной панели */
+.admin-panel-title {
+    color: #1e3c72 !important;
+    font-weight: bold;
+}
+
+[data-theme="dark"] .admin-panel-title {
+    color: #2a5298 !important;
 }
 </style>
 
