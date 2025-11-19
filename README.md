@@ -118,7 +118,6 @@
     
         bash
         git clone https://github.com/bboykorg/VTB-box-office.git
-        cd vtb-online-cashier
     
    Создайте виртуальное окружение:
 
