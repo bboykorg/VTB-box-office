@@ -124,10 +124,6 @@
         source venv/bin/activate  # Linux/MacOS
         # или
         venv\Scripts\activate     # Windows
-
-   Установите Ollama:
-   
-        winget install Ollama.Ollama && ollama pull deepseek-r1:8b && ollama serve
     
    Установите зависимости:
     
