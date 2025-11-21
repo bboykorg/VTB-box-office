@@ -155,6 +155,34 @@
         [data-theme="dark"] .balance-amount {
             color: var(--light-blue) !important;
         }
+
+        /* Базовая кнопка операций */
+.btn-operation-primary {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    color: white !important;
+}
+
+/* Светлая тема — тёмно-синяя кнопка */
+[data-theme="light"] .btn-operation-primary {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+}
+
+/* Тёмная тема — ЯРКАЯ кнопка, чтобы не сливалась с фоном */
+[data-theme="dark"] .btn-operation-primary {
+    background: linear-gradient(135deg, #4a90ff 0%, #6ba8ff 100%);
+    box-shadow: 0 0 10px rgba(80, 150, 255, 0.4);
+}
+
+/* Ховер общий */
+.btn-operation-primary:hover {
+    transform: translateY(-2px);
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(30, 60, 114, 0.4);
+}
+
     </style>
 </head>
 <body data-theme="light">
