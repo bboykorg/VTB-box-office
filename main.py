@@ -288,17 +288,18 @@ def change_password():
             flash("Пароль должен содержать не менее 4 символов", "danger")
             return redirect(url_for("change_password"))
 
+        # Обновляем пароль
         user.set_password(new_password)
-
         try:
             db.commit()
-            flash("Пароль успешно изменен", "success")
+            flash("Пароль успешно изменён", "success")
             return redirect(url_for("profile"))
-        except Exception as e:
+        except Exception:
             db.rollback()
             flash("Ошибка при изменении пароля", "danger")
 
     return render_template("change_password.html")
+
 
 
 @app.route("/deposit", methods=["GET", "POST"])
