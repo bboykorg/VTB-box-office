@@ -49,7 +49,15 @@
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
+                        <div class="form-text">Можно ввести +79991234567, 89991234567 или 9991234567</div>
                         <div class="invalid-feedback" id="phone-error"></div>
+                    </div>
+
+                    <!-- Блок для отображения информации о получателе -->
+                    <div id="recipientInfo" class="mb-3" style="display: none;">
+                        <div class="alert alert-success">
+                            <strong>Получатель:</strong> <span id="recipientName"></span>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -80,13 +88,6 @@
                     </button>
                 </form>
 
-                <!-- Блок для отображения информации о получателе -->
-                <div id="recipientInfo" class="mt-3" style="display: none;">
-                    <div class="alert alert-success">
-                        <strong>Получатель:</strong> <span id="recipientName"></span>
-                    </div>
-                </div>
-
                 <div class="mt-3">
                     <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100">
                         <i class="fas fa-arrow-left me-2"></i>Назад
@@ -107,14 +108,24 @@
 <style>
 .phone-valid {
     border-color: #198754 !important;
-    background-color: #f8fff9;
+    background-color: #f8fff9 !important;
 }
 .phone-invalid {
     border-color: #dc3545 !important;
-    background-color: #fff8f8;
+    background-color: #fff8f8 !important;
 }
 #recipientInfo {
     transition: all 0.3s ease;
+}
+
+/* Сохранение стилей в темной теме */
+[data-theme="dark"] .phone-valid {
+    border-color: #198754 !important;
+    background-color: #0f3d21 !important;
+}
+[data-theme="dark"] .phone-invalid {
+    border-color: #dc3545 !important;
+    background-color: #3d1a1a !important;
 }
 </style>
 
@@ -129,9 +140,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneError = document.getElementById('phone-error');
     const clearPhoneBtn = document.getElementById('clearPhone');
 
+    // Переменная для хранения состояния валидации телефона
+    let phoneValidationState = null;
+
     // Функция для нормализации номера телефона на клиенте
     function normalizePhone(phone) {
-        // Удаляем все нецифровые символы кроме плюса
         let cleaned = phone.replace(/[^\d+]/g, '');
 
         if (cleaned.startsWith('8') && cleaned.length === 11) {
@@ -174,12 +187,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Функция для обновления стилей телефона
+    function updatePhoneStyles(state, message = '') {
+        phoneInput.classList.remove('phone-valid', 'phone-invalid');
+        phoneError.style.display = 'none';
+        recipientInfo.style.display = 'none';
+
+        if (state === 'valid') {
+            phoneInput.classList.add('phone-valid');
+            recipientInfo.style.display = 'block';
+            phoneValidationState = 'valid';
+        } else if (state === 'invalid') {
+            phoneInput.classList.add('phone-invalid');
+            phoneError.style.display = 'block';
+            phoneError.textContent = message;
+            phoneValidationState = 'invalid';
+        } else {
+            phoneValidationState = null;
+        }
+    }
+
     // Очистка поля телефона
     clearPhoneBtn.addEventListener('click', function() {
         phoneInput.value = '';
-        phoneInput.classList.remove('phone-valid', 'phone-invalid');
-        recipientInfo.style.display = 'none';
-        phoneError.style.display = 'none';
+        updatePhoneStyles(null);
         phoneInput.focus();
     });
 
@@ -189,12 +220,9 @@ document.addEventListener('DOMContentLoaded', function() {
         clearTimeout(searchTimeout);
         const phone = phoneInput.value.trim();
 
-        // Сбрасываем состояние
-        phoneInput.classList.remove('phone-valid', 'phone-invalid');
-        recipientInfo.style.display = 'none';
-        phoneError.style.display = 'none';
-
+        // Сбрасываем состояние при пустом поле
         if (phone.length === 0) {
+            updatePhoneStyles(null);
             return;
         }
 
@@ -209,19 +237,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await findUserByPhone(phone);
 
             if (result.user) {
-                phoneInput.classList.add('phone-valid');
+                updatePhoneStyles('valid');
                 recipientName.textContent = `${result.user.username} (${result.user.phone_number})`;
-                recipientInfo.style.display = 'block';
             } else if (result.error) {
-                phoneInput.classList.add('phone-invalid');
-                phoneError.style.display = 'block';
-                phoneError.textContent = result.error;
+                updatePhoneStyles('invalid', result.error);
             } else {
-                phoneInput.classList.add('phone-invalid');
-                phoneError.style.display = 'block';
-                phoneError.textContent = 'Пользователь не найден';
+                updatePhoneStyles('invalid', 'Пользователь не найден');
             }
         }, 800);
+    });
+
+    // Восстановление состояния при фокусе на поле телефона
+    phoneInput.addEventListener('focus', function() {
+        if (phoneValidationState === 'valid') {
+            updatePhoneStyles('valid');
+        } else if (phoneValidationState === 'invalid') {
+            updatePhoneStyles('invalid', phoneError.textContent);
+        }
     });
 
     // Валидация суммы в реальном времени
@@ -244,6 +276,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
         }
     });
+
+    // Восстановление состояния при загрузке страницы, если поле уже заполнено
+    if (phoneInput.value.trim()) {
+        phoneInput.dispatchEvent(new Event('input'));
+    }
 });
 </script>
 {% endblock %}
