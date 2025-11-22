@@ -3,20 +3,6 @@
 {% block title %}Вход - ВТБ Онлайн-касса{% endblock %}
 
 {% block content %}
-<!-- Проверка авторизации и перенаправление -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Проверяем, есть ли информация о авторизации в localStorage
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    const currentUser = localStorage.getItem('currentUser');
-
-    if (isLoggedIn === 'true' && currentUser) {
-        // Если пользователь уже авторизован, перенаправляем на главную страницу
-        window.location.href = "{{ url_for('index') }}";
-    }
-});
-</script>
-
 <div class="row justify-content-center">
     <div class="col-md-6">
         <div class="card shadow">
@@ -24,11 +10,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Вход в систему</h4>
             </div>
             <div class="card-body">
+                <!-- Блок для отображения ошибок -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
                 <form method="POST" id="loginForm">
                     <div class="mb-3">
                         <label for="username" class="form-label">Имя пользователя:</label>
                         <input type="text" class="form-control" id="username" name="username" required
-                               placeholder="Введите имя пользователя">
+                               placeholder="Введите имя пользователя" value="{{ request.form.username if request.form.username }}">
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Пароль:</label>
@@ -63,7 +61,6 @@ document.addEventListener('DOMContentLoaded', function() {
     background-color: #e9ecef;
 }
 
-/* Стили для темной темы */
 [data-theme="dark"] .toggle-password {
     background-color: #495057;
     border-color: #6c757d;
@@ -77,18 +74,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Обработка успешного входа
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-        // В реальном приложении это должно делаться после успешной проверки на сервере
-        const username = document.getElementById('username').value;
-
-        // Сохраняем информацию о входе в localStorage
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('currentUser', username);
-
-        // Дальше форма отправится обычным образом
-    });
-
     // Функция для переключения видимости пароля
     document.querySelectorAll('.toggle-password').forEach(button => {
         button.addEventListener('click', function() {
