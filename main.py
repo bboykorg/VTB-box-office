@@ -188,7 +188,15 @@ def register():
         if db.query(User).filter_by(username=username).first():
             return render_template("register.html", message="Пользователь уже существует")
 
-        user = User(username=username, phone_number=phone_number)
+        # Получаем актуальное время для даты регистрации
+        user_info = get_user_info()
+        registration_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
+
+        user = User(
+            username=username,
+            phone_number=phone_number,
+            created_at=registration_time
+        )
         user.set_password(password)
         db.add(user)
         try:
@@ -214,12 +222,10 @@ def profile():
     db = next(get_db())
     transactions = db.query(Transaction).filter_by(user_id=current_user.id).order_by(
         Transaction.timestamp.desc()).limit(10).all()
-
     return render_template("profile.html", user=current_user, transactions=transactions,
                            phone_number=current_user.phone_number)
 
 
-# Добавим эти маршруты в app.py после существующих маршрутов
 
 @app.route("/profile/edit", methods=["GET", "POST"])
 @login_required
@@ -308,7 +314,6 @@ def change_password():
     return render_template("change_password.html")
 
 
-
 @app.route("/deposit", methods=["GET", "POST"])
 @login_required
 def deposit():
@@ -319,14 +324,20 @@ def deposit():
                 flash("Сумма должна быть положительной", "danger")
             else:
                 db = next(get_db())
-                # Получаем пользователя из базы данных, а не используем current_user напрямую
+                # Получаем пользователя из базы данных
                 user = db.query(User).get(current_user.id)
                 user.balance += amount
+
+                # Получаем актуальное время
+                user_info = get_user_info()
+                current_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
+
                 tx = Transaction(
                     user_id=user.id,
                     type="deposit",
                     amount=amount,
-                    description=f"Внесение {amount}"
+                    description=f"Внесение {amount}",
+                    timestamp=current_time
                 )
                 db.add(tx)
                 db.commit()
@@ -352,11 +363,17 @@ def withdraw():
                 # Получаем пользователя из базы данных
                 user = db.query(User).get(current_user.id)
                 user.balance -= amount
+
+                # Получаем актуальное время
+                user_info = get_user_info()
+                current_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
+
                 tx = Transaction(
                     user_id=user.id,
                     type="withdraw",
                     amount=amount,
-                    description=f"Снятие {amount}"
+                    description=f"Снятие {amount}",
+                    timestamp=current_time
                 )
                 db.add(tx)
                 db.commit()
@@ -406,6 +423,10 @@ def transfer():
                 sender.balance -= amount
                 recipient.balance += amount
 
+                # Получаем актуальное время
+                user_info = get_user_info()
+                current_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
+
                 # Формируем описание перевода
                 if not description:
                     out_description = f"Перевод {amount} ₽ → {recipient.username}"
@@ -419,7 +440,8 @@ def transfer():
                     type="transfer_out",
                     amount=amount,
                     target_id=recipient.id,
-                    description=out_description
+                    description=out_description,
+                    timestamp=current_time
                 )
 
                 tx_in = Transaction(
@@ -427,7 +449,8 @@ def transfer():
                     type="transfer_in",
                     amount=amount,
                     target_id=sender.id,
-                    description=in_description
+                    description=in_description,
+                    timestamp=current_time
                 )
 
                 db.add_all([tx_out, tx_in])
@@ -627,6 +650,7 @@ def admin():
     db = next(get_db())
     transactions = db.query(Transaction).order_by(Transaction.timestamp.desc()).all()
     users = db.query(User).all()
+    user_info = get_user_info()
     return render_template("admin.html", transactions=transactions, users=users)
 
 
@@ -638,9 +662,7 @@ def currency():
 @app.route('/deposit_calculator')
 def deposit_calculator():
     user_info = get_user_info()
-    return render_template('deposit_calculator.html',
-                           current_time=user_info["current_time"],
-                           country=user_info["country"])
+    return render_template('deposit_calculator.html')
 
 
 def build_prompt(outcome):
