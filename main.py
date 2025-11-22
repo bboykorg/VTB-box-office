@@ -150,12 +150,19 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"].strip()
+        username_or_phone = request.form["username"].strip()
         password = request.form["password"]
         db = next(get_db())
-        user = db.query(User).filter_by(username=username).first()
+
+        # Ищем пользователя по имени пользователя ИЛИ номеру телефона
+        user = db.query(User).filter(
+            (User.username == username_or_phone) |
+            (User.phone_number == normalize_phone_number(username_or_phone))
+        ).first()
+
         if user and user.check_password(password):
             login_user(user)
+            flash(f"Добро пожаловать, {user.username}!", "success")
             return redirect(url_for("index"))
         flash("Неверный логин или пароль", "danger")
     return render_template("login.html")
@@ -649,7 +656,7 @@ def build_prompt(outcome):
      * Пароль минимум 4 символа
      * Проверка уникальности имени пользователя и номера телефона
 
-   - Вход (/login): по имени пользователя и паролю
+   - Вход (/login): по имени пользователя ИЛИ номеру телефона и паролю
    - Выход (/logout)
 
 2. ГЛАВНАЯ СТРАНИЦА (/):

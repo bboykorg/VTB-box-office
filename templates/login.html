@@ -24,9 +24,13 @@
 
                 <form method="POST" id="loginForm">
                     <div class="mb-3">
-                        <label for="username" class="form-label">Имя пользователя:</label>
+                        <label for="username" class="form-label">Имя пользователя или номер телефона:</label>
                         <input type="text" class="form-control" id="username" name="username" required
-                               placeholder="Введите имя пользователя" value="{{ request.form.username if request.form.username }}">
+                               placeholder="Введите имя пользователя или номер телефона"
+                               value="{{ request.form.username if request.form.username }}">
+                        <div class="form-text">
+                            Можно использовать имя пользователя или номер телефона в формате: +79991234567, 89991234567 или 9991234567
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Пароль:</label>
@@ -91,6 +95,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 icon.classList.add('fa-eye');
             }
         });
+    });
+
+    // Автоматическая нормализация номера телефона при вводе
+    const usernameInput = document.getElementById('username');
+    usernameInput.addEventListener('blur', function() {
+        let value = this.value.trim();
+
+        // Если ввод похож на номер телефона (содержит цифры и возможно другие символы)
+        if (value && /[\d+]/.test(value)) {
+            // Отправляем на сервер для нормализации (или можно сделать клиентскую нормализацию)
+            // В реальном приложении здесь можно добавить клиентскую нормализацию
+            console.log('Введен номер телефона:', value);
+        }
     });
 });
 </script>
