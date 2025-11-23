@@ -73,18 +73,15 @@ function calculateDeposit() {
     const term = parseInt(document.getElementById('term').value);
     const type = document.getElementById('type').value;
 
-    // Процентные ставки в зависимости от срока
     const rates = {3: 5, 6: 6, 12: 7, 24: 8};
     const rate = rates[term] || 5;
 
     let total, profit;
 
     if (type === 'simple') {
-        // Простой процент
         profit = (amount * rate * term / 12) / 100;
         total = amount + profit;
     } else {
-        // Сложный процент (ежемесячная капитализация)
         const monthlyRate = rate / 12 / 100;
         total = amount * Math.pow(1 + monthlyRate, term);
         profit = total - amount;
@@ -132,14 +129,12 @@ function calculateDeposit() {
     resultDiv.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Обновление отображения ставки при изменении срока
 document.getElementById('term').addEventListener('change', function() {
     const rates = {3: 5, 6: 6, 12: 7, 24: 8};
     const rate = rates[this.value] || 5;
     document.getElementById('rate-display').textContent = rate + '%';
 });
 
-// Рассчитать при загрузке
 document.addEventListener('DOMContentLoaded', function() {
     calculateDeposit();
 });

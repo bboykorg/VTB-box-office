@@ -129,24 +129,20 @@
     transform: translateX(5px);
 }
 
-/* Стили для баланса */
 .balance-amount {
     color: var(--primary-blue) !important;
     font-weight: bold;
 }
 
-/* Стили для курсов валют */
 .currency-badge {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%) !important;
     color: white !important;
 }
 
-/* Стили для иконок операций */
 .operation-icon {
     color: var(--primary-blue) !important;
 }
 
-/* Светлая тема - ТЕМНЫЕ кнопки */
 [data-theme="light"] .btn-operation-primary {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     border: none;
@@ -161,7 +157,6 @@
     font-weight: 600;
 }
 
-/* Темная тема - СВЕТЛЫЕ кнопки */
 [data-theme="dark"] .btn-operation-primary {
     background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%);
     border: none;
@@ -176,7 +171,6 @@
     font-weight: 600;
 }
 
-/* Общие стили для кнопок операций */
 .btn-operation-primary,
 .btn-operation-secondary {
     transition: all 0.3s ease;
@@ -191,7 +185,6 @@
     color: white;
 }
 
-/* Темная тема для иконок */
 [data-theme="dark"] .operation-icon {
     color: #8ba9f0 !important;
 }
@@ -204,7 +197,6 @@
     background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%) !important;
 }
 
-/* Границы для карточек */
 .operation-card:nth-child(1) {
     border-left-color: #1e3c72;
 }
@@ -221,7 +213,6 @@
     border-left-color: #2a5298;
 }
 
-/* Темная тема для границ карточек */
 [data-theme="dark"] .operation-card:nth-child(1) {
     border-left-color: #4a76c6;
 }
@@ -238,7 +229,6 @@
     border-left-color: #6c8dd3;
 }
 
-/* Стили для заголовка административной панели */
 .admin-panel-title {
     color: #1e3c72 !important;
     font-weight: bold;
@@ -250,10 +240,8 @@
 </style>
 
 <script>
-// Функция для загрузки курсов валют
 async function loadCurrencyRates() {
     try {
-        // Имитация данных (замените на реальный парсинг)
         const mockRates = {
             USD: (Math.random() * 10 + 80).toFixed(2),
             EUR: (Math.random() * 10 + 90).toFixed(2),

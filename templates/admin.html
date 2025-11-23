@@ -10,7 +10,6 @@
                 <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Административная панель</h4>
             </div>
             <div class="card-body">
-                <!-- Статистика -->
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card admin-stat-card text-white">
@@ -46,7 +45,6 @@
                     </div>
                 </div>
 
-                <!-- Пользователи -->
                 <h5 class="mb-3 admin-section-title"><i class="fas fa-users me-2"></i>Пользователи системы</h5>
                 <div class="table-responsive mb-5">
                     <table class="table table-striped admin-table">
@@ -78,8 +76,6 @@
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Все транзакции -->
                 <h5 class="mb-3 admin-section-title"><i class="fas fa-list-alt me-2"></i>Все транзакции</h5>
                 <div class="table-responsive">
                     <table class="table table-striped admin-table">
@@ -134,24 +130,20 @@
 </div>
 
 <style>
-/* Заголовок админ-панели */
 .admin-header {
     background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%) !important;
     color: white;
 }
 
-/* Карточки статистики - одинаковый цвет для всех */
 .admin-stat-card {
     background: linear-gradient(135deg, #8ba9f0 0%, #6c8dd3 100%);
     border: none;
 }
 
-/* Темная тема для карточек статистики */
 [data-theme="dark"] .admin-stat-card {
     background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
 }
 
-/* Заголовки разделов */
 .admin-section-title {
     color: #4a76c6;
     border-bottom: 2px solid #8ba9f0;
@@ -163,7 +155,6 @@
     border-bottom-color: #4a76c6;
 }
 
-/* Таблицы */
 .admin-table th {
     background: linear-gradient(135deg, #4a76c6 0%, #3a6fd9 100%);
     color: white;
@@ -178,13 +169,11 @@
     border-color: #dee2e6;
 }
 
-/* Текст в таблицах с адаптацией под тему */
 .admin-text {
     color: var(--text-color);
     transition: color 0.3s ease;
 }
 
-/* Бейджи - светло-синие тона */
 .admin-badge {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
     color: white;
@@ -201,7 +190,7 @@
 }
 
 .withdraw-badge {
-    background: linear-gradient(135deg, #6f42c1 0%, #5a2d9c 100%); /* ФИОЛЕТОВЫЙ */
+    background: linear-gradient(135deg, #6f42c1 0%, #5a2d9c 100%);
     color: white;
 }
 
@@ -210,7 +199,6 @@
     color: white;
 }
 
-/* Темная тема для бейджей */
 [data-theme="dark"] .admin-badge {
     background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
 }
@@ -224,7 +212,7 @@
 }
 
 [data-theme="dark"] .withdraw-badge {
-    background: linear-gradient(135deg, #8e6cbf 0%, #6f42c1 100%); /* ФИОЛЕТОВЫЙ */
+    background: linear-gradient(135deg, #8e6cbf 0%, #6f42c1 100%);
     color: white;
 }
 
@@ -233,14 +221,13 @@
     color: white;
 }
 
-/* Суммы транзакций */
 .deposit-amount {
     color: #27ae60 !important;
     font-weight: bold;
 }
 
 .withdraw-amount {
-    color: #6f42c1 !important; /* ФИОЛЕТОВЫЙ */
+    color: #6f42c1 !important;
     font-weight: bold;
 }
 
@@ -258,13 +245,12 @@
     color: white !important;
 }
 
-/* Темная тема для сумм */
 [data-theme="dark"] .deposit-amount {
     color: #58d68d !important;
 }
 
 [data-theme="dark"] .withdraw-amount {
-    color: #b197fc !important; /* ФИОЛЕТОВЫЙ */
+    color: #b197fc !important;
 }
 
 [data-theme="dark"] .transfer-amount {
@@ -275,7 +261,7 @@
     color: #8ba9f0 !important;
 }
 
-/* Анимации для карточек статистики */
+
 .admin-stat-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -285,7 +271,6 @@
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Общий стиль для текста в админ-панели */
 .admin-table td:not(.balance-cell):not(.transaction-amount) {
     color: var(--text-color);
     transition: color 0.3s ease;

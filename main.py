@@ -535,43 +535,6 @@ def find_user_by_phone():
     else:
         return jsonify({"error": "Пользователь не найден"}), 404
 
-
-@app.route("/confirm-transfer", methods=["GET", "POST"])
-@login_required
-def confirm_transfer():
-    if request.method == "POST":
-        try:
-            recipient_id = request.form.get("recipient_id")
-            phone = request.form.get("phone")
-            amount = float(request.form.get("amount"))
-            description = request.form.get("description", "")
-
-            db = next(get_db())
-            recipient = db.query(User).get(recipient_id)
-
-            if not recipient:
-                flash("Получатель не найден", "danger")
-                return redirect(url_for("transfer"))
-
-            # Проверяем баланс
-            if amount > current_user.balance:
-                flash("Недостаточно средств", "danger")
-                return redirect(url_for("transfer"))
-
-            return render_template("confirm_transfer.html",
-                                   recipient_username=recipient.username,
-                                   recipient_phone=phone,
-                                   recipient_id=recipient_id,
-                                   amount=amount,
-                                   description=description)
-
-        except Exception as e:
-            flash(f"Ошибка: {str(e)}", "danger")
-            return redirect(url_for("transfer"))
-
-    return redirect(url_for("transfer"))
-
-
 @app.route("/execute-transfer", methods=["POST"])
 @login_required
 def execute_transfer():
@@ -652,12 +615,6 @@ def admin():
     users = db.query(User).all()
     user_info = get_user_info()
     return render_template("admin.html", transactions=transactions, users=users)
-
-
-@app.route('/currency')
-def currency():
-    return render_template('currency.html')
-
 
 @app.route('/deposit_calculator')
 def deposit_calculator():

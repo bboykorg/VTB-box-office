@@ -53,7 +53,6 @@
                         <div class="invalid-feedback" id="phone-error"></div>
                     </div>
 
-                    <!-- Блок для отображения информации о получателе -->
                     <div id="recipientInfo" class="mb-3" style="display: none;">
                         <div class="alert alert-success">
                             <strong>Получатель:</strong> <span id="recipientName"></span>
@@ -118,7 +117,6 @@
     transition: all 0.3s ease;
 }
 
-/* Сохранение стилей в темной теме */
 [data-theme="dark"] .phone-valid {
     border-color: #198754 !important;
     background-color: #0f3d21 !important;
@@ -140,10 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const phoneError = document.getElementById('phone-error');
     const clearPhoneBtn = document.getElementById('clearPhone');
 
-    // Переменная для хранения состояния валидации телефона
     let phoneValidationState = null;
 
-    // Функция для нормализации номера телефона на клиенте
     function normalizePhone(phone) {
         let cleaned = phone.replace(/[^\d+]/g, '');
 
@@ -157,7 +153,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return cleaned;
     }
 
-    // Функция для поиска пользователя по номеру телефона
     async function findUserByPhone(phone) {
         const normalizedPhone = normalizePhone(phone);
 
@@ -187,7 +182,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Функция для обновления стилей телефона
     function updatePhoneStyles(state, message = '') {
         phoneInput.classList.remove('phone-valid', 'phone-invalid');
         phoneError.style.display = 'none';
@@ -207,32 +201,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Очистка поля телефона
     clearPhoneBtn.addEventListener('click', function() {
         phoneInput.value = '';
         updatePhoneStyles(null);
         phoneInput.focus();
     });
 
-    // Обработчик ввода номера телефона
     let searchTimeout;
     phoneInput.addEventListener('input', function() {
         clearTimeout(searchTimeout);
         const phone = phoneInput.value.trim();
 
-        // Сбрасываем состояние при пустом поле
         if (phone.length === 0) {
             updatePhoneStyles(null);
             return;
         }
 
-        // Показываем нормализованный номер как подсказку
         const normalized = normalizePhone(phone);
         if (normalized && normalized !== phone) {
             phoneInput.title = `Будет использован: ${normalized}`;
         }
 
-        // Поиск пользователя с задержкой
         searchTimeout = setTimeout(async () => {
             const result = await findUserByPhone(phone);
 
@@ -247,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 800);
     });
 
-    // Восстановление состояния при фокусе на поле телефона
     phoneInput.addEventListener('focus', function() {
         if (phoneValidationState === 'valid') {
             updatePhoneStyles('valid');
@@ -256,7 +244,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Валидация суммы в реальном времени
     amountInput.addEventListener('input', function() {
         const maxAmount = parseFloat(amountInput.getAttribute('max'));
         const currentAmount = parseFloat(amountInput.value) || 0;
@@ -270,14 +257,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Предотвращение ввода отрицательных значений
     amountInput.addEventListener('keydown', function(e) {
         if (e.key === '-' || e.key === 'e' || e.key === 'E') {
             e.preventDefault();
         }
     });
 
-    // Восстановление состояния при загрузке страницы, если поле уже заполнено
     if (phoneInput.value.trim()) {
         phoneInput.dispatchEvent(new Event('input'));
     }

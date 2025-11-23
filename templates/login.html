@@ -10,7 +10,6 @@
                 <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Вход в систему</h4>
             </div>
             <div class="card-body">
-                <!-- Блок для отображения ошибок -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -78,7 +77,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Функция для переключения видимости пароля
     document.querySelectorAll('.toggle-password').forEach(button => {
         button.addEventListener('click', function() {
             const targetId = this.getAttribute('data-target');
@@ -97,15 +95,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Автоматическая нормализация номера телефона при вводе
     const usernameInput = document.getElementById('username');
     usernameInput.addEventListener('blur', function() {
         let value = this.value.trim();
 
-        // Если ввод похож на номер телефона (содержит цифры и возможно другие символы)
         if (value && /[\d+]/.test(value)) {
-            // Отправляем на сервер для нормализации (или можно сделать клиентскую нормализацию)
-            // В реальном приложении здесь можно добавить клиентскую нормализацию
             console.log('Введен номер телефона:', value);
         }
     });
