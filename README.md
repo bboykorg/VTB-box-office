@@ -128,7 +128,7 @@
    Установите зависимости:
     
         bash
-        pip install -r requirements.txt
+        pip install -r requirements
 
    Настройте переменную окружения:
 
