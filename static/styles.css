@@ -1,3 +1,4 @@
+/* ===== VTB COLOR SCHEME ===== */
 :root {
     --vtb-blue: #0033a0;
     --vtb-light-blue: #0054a6;
@@ -7,6 +8,7 @@
     --vtb-text: #333333;
 }
 
+/* ===== FIX FOOTER POSITION ===== */
 html, body {
     height: 100%;
     margin: 0;
@@ -27,6 +29,7 @@ body {
     padding-bottom: 20px;
 }
 
+/* ===== HEADER STYLES ===== */
 header {
     background: linear-gradient(135deg, var(--vtb-blue) 0%, var(--vtb-light-blue) 100%);
     color: white;
@@ -45,6 +48,7 @@ header {
     color: #ffd700 !important;
 }
 
+/* ===== ADMIN STYLES ===== */
 .admin-banner {
     background-color: var(--vtb-red);
     color: white;
@@ -63,6 +67,7 @@ header {
     border-left: 4px solid var(--vtb-red);
 }
 
+/* ===== CURRENCY STYLES ===== */
 .currency-widget {
     background: white;
     border-radius: 8px;
@@ -89,6 +94,7 @@ header {
     color: var(--vtb-red);
 }
 
+/* ===== DEPOSIT CALCULATOR ===== */
 .deposit-calculator {
     background: white;
     border-radius: 8px;
@@ -143,6 +149,7 @@ header {
     margin-top: 15px;
 }
 
+/* ===== BUTTON STYLES ===== */
 .btn-primary {
     background-color: var(--vtb-blue);
     border-color: var(--vtb-blue);

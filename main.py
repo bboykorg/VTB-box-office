@@ -12,15 +12,14 @@ from sqlalchemy.exc import IntegrityError
 import requests
 
 OLLAMA_URL = "http://localhost:11434"
-#MODEL_NAME = "deepseek-r1:8b"
-OLLAMA_MODEL_NAME = "gemma3:1b"
-
-api_key = os.environ.get("MISTRAL_API_KEY")
+#MODEL_NAME = "qwen3-vl:4b"
+MODEL_NAME = "gemma3:1b"
+api_key = os.environ.get("API_KEY")
 
 if not api_key:
-    raise RuntimeError("MISTRAL_API_KEY должен быть задан в окружении")
+    raise RuntimeError("API_KEY должен быть задан в окружении")
 
-model = "mistral-tiny"
+model = 'ministral-8b-latest'
 
 client = Mistral(api_key=api_key)
 
@@ -641,7 +640,6 @@ def build_prompt(outcome):
    - Возможность добавить описание к переводу
 
 6. ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ:
-   - Курсы валют (/currency) - страница для просмотра актуальных курсов
    - Калькулятор вкладов (/deposit_calculator) - расчет доходности вкладов
 
 7. АДМИНИСТРАТИВНАЯ ПАНЕЛЬ (/admin):
@@ -660,15 +658,6 @@ def build_prompt(outcome):
    - balance: текущий баланс счета
    - is_admin: флаг администратора
    - created_at: дата регистрации
-
-   Модель Transaction:
-   - id: идентификатор транзакции
-   - user_id: ссылка на пользователя
-   - type: тип операции (deposit, withdraw, transfer_out, transfer_in)
-   - amount: сумма операции
-   - target_id: для переводов - ID получателя/отправителя
-   - timestamp: дата и время операции
-   - description: описание операции
 
 9. ТЕСТОВЫЕ ПОЛЬЗОВАТЕЛИ (создаются автоматически):
    - admin / admin123:
@@ -714,8 +703,6 @@ def build_prompt(outcome):
 
 13. СИСТЕМА БЕЗОПАСНОСТИ:
     - Пароли хранятся в хешированном виде (Werkzeug)
-    - Сессии управляются через Flask-Login
-    - CSRF-защита через Flask-WTF (если используется)
     - Валидация всех входящих данных
 
 14. API ЭНДПОИНТЫ:
@@ -777,7 +764,7 @@ def sanitize_ai_text(text, max_len=4000):
 def query_ollama(prompt):
     try:
         payload = {
-            "model": OLLAMA_MODEL_NAME,
+            "model": MODEL_NAME,
             "prompt": prompt,
             "stream": False,
             "options": {
@@ -790,7 +777,7 @@ def query_ollama(prompt):
         response = requests.post(
             f"{OLLAMA_URL}/api/generate",
             json=payload,
-            timeout=30
+            timeout=60
         )
 
         if response.status_code == 200:
@@ -809,6 +796,7 @@ def query_ollama(prompt):
     except Exception as e:
         print(f"Неожиданная ошибка при запросе к Ollama: {e}")
         return None
+
 
 
 def query_mistral(prompt):

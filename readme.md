@@ -128,7 +128,7 @@
    Установите зависимости:
     
         bash
-        pip install -r requirements
+        pip install -r requirements.txt
 
    Настройте переменную окружения:
 
@@ -136,7 +136,7 @@
 
    Установите Ollama
 
-       winget install Ollama.Ollama && ollama pull gemma3:1b && ollama serve
+       winget install Ollama.Ollama && ollama pull deepseek-r1:8b && ollama serve
     
    Запустите приложение:
 
