@@ -12,14 +12,15 @@ from sqlalchemy.exc import IntegrityError
 import requests
 
 OLLAMA_URL = "http://localhost:11434"
-MODEL_NAME = "deepseek-r1:8b"
+#MODEL_NAME = "deepseek-r1:8b"
+OLLAMA_MODEL_NAME = "gemma3:1b"
 
-api_key = os.environ.get("API_KEY")
+api_key = os.environ.get("MISTRAL_API_KEY")
 
 if not api_key:
-    raise RuntimeError("API_KEY должен быть задан в окружении")
+    raise RuntimeError("MISTRAL_API_KEY должен быть задан в окружении")
 
-model = "mistral-large-latest"
+model = "mistral-tiny"
 
 client = Mistral(api_key=api_key)
 
@@ -776,7 +777,7 @@ def sanitize_ai_text(text, max_len=4000):
 def query_ollama(prompt):
     try:
         payload = {
-            "model": MODEL_NAME,
+            "model": OLLAMA_MODEL_NAME,
             "prompt": prompt,
             "stream": False,
             "options": {
