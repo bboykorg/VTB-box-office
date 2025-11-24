@@ -45,7 +45,6 @@ class User(Base, UserMixin):
     created_at = Column(DateTime, default=datetime.utcnow)
     phone_number = Column(String(20), nullable=False)
 
-    # Явно указываем foreign_keys для отношений
     transactions = relationship(
         "Transaction",
         foreign_keys="Transaction.user_id",
@@ -53,7 +52,6 @@ class User(Base, UserMixin):
         cascade="all, delete-orphan"
     )
 
-    # Отношение для входящих переводов
     incoming_transactions = relationship(
         "Transaction",
         foreign_keys="Transaction.target_id",
@@ -77,7 +75,6 @@ class Transaction(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     description = Column(String(200))
 
-    # Явно указываем foreign_keys для отношений
     user = relationship(
         "User",
         foreign_keys=[user_id],
@@ -154,7 +151,6 @@ def login():
         password = request.form["password"]
         db = next(get_db())
 
-        # Ищем пользователя по имени пользователя ИЛИ номеру телефона
         user = db.query(User).filter(
             (User.username == username_or_phone) |
             (User.phone_number == normalize_phone_number(username_or_phone))
@@ -176,11 +172,9 @@ def register():
         password = request.form["password"]
         confirm_password = request.form.get("confirm_password", "")
 
-        # Проверка совпадения паролей
         if password != confirm_password:
             return render_template("register.html", message="Пароли не совпадают")
 
-        # Проверка длины пароля
         if len(password) < 4:
             return render_template("register.html", message="Пароль должен содержать не менее 4 символов")
 
@@ -188,7 +182,6 @@ def register():
         if db.query(User).filter_by(username=username).first():
             return render_template("register.html", message="Пользователь уже существует")
 
-        # Получаем актуальное время для даты регистрации
         user_info = get_user_info()
         registration_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
 
@@ -238,12 +231,10 @@ def edit_profile():
         db = next(get_db())
         user = db.query(User).get(current_user.id)
 
-        # Проверка текущего пароля
         if not user.check_password(current_password):
             flash("Неверный текущий пароль", "danger")
             return redirect(url_for("edit_profile"))
 
-        # Проверка уникальности имени пользователя
         if username != user.username:
             existing_user = db.query(User).filter_by(username=username).first()
             if existing_user and existing_user.id != user.id:
@@ -251,7 +242,6 @@ def edit_profile():
                 return redirect(url_for("edit_profile"))
             user.username = username
 
-        # Проверка уникальности номера телефона
         normalized_phone = normalize_phone_number(phone_number)
         if not normalized_phone:
             flash("Неверный формат номера телефона", "danger")
@@ -282,26 +272,21 @@ def change_password():
         current_password = request.form["current_password"]
         new_password = request.form["new_password"]
         confirm_password = request.form["confirm_password"]
-
         db = next(get_db())
         user = db.query(User).get(current_user.id)
 
-        # Проверка текущего пароля
         if not user.check_password(current_password):
             flash("Неверный текущий пароль", "danger")
             return redirect(url_for("change_password"))
 
-        # Проверка совпадения новых паролей
         if new_password != confirm_password:
             flash("Новые пароли не совпадают", "danger")
             return redirect(url_for("change_password"))
 
-        # Проверка длины нового пароля
         if len(new_password) < 4:
             flash("Пароль должен содержать не менее 4 символов", "danger")
             return redirect(url_for("change_password"))
 
-        # Обновляем пароль
         user.set_password(new_password)
         try:
             db.commit()
@@ -324,11 +309,9 @@ def deposit():
                 flash("Сумма должна быть положительной", "danger")
             else:
                 db = next(get_db())
-                # Получаем пользователя из базы данных
                 user = db.query(User).get(current_user.id)
                 user.balance += amount
 
-                # Получаем актуальное время
                 user_info = get_user_info()
                 current_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
 
@@ -360,11 +343,9 @@ def withdraw():
                 flash("Недостаточно средств", "danger")
             else:
                 db = next(get_db())
-                # Получаем пользователя из базы данных
                 user = db.query(User).get(current_user.id)
                 user.balance -= amount
 
-                # Получаем актуальное время
                 user_info = get_user_info()
                 current_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
 
@@ -388,7 +369,6 @@ def withdraw():
 @login_required
 def transfer():
     db = next(get_db())
-    # Получаем актуальный баланс из БД
     current_user_db = db.query(User).get(current_user.id)
     user_balance = current_user_db.balance
 
@@ -398,13 +378,11 @@ def transfer():
             amount = float(request.form["amount"])
             description = request.form.get("description", "").strip()
 
-            # Нормализация номера телефона
             normalized_phone = normalize_phone_number(target_phone)
             if not normalized_phone:
                 flash("Неверный формат номера телефона", "danger")
                 return render_template("transfer.html", user_balance=user_balance)
 
-            # Поиск получателя по нормализованному номеру телефона
             target = db.query(User).filter_by(phone_number=normalized_phone).first()
 
             if not target:
@@ -416,18 +394,15 @@ def transfer():
             elif amount > user_balance:
                 flash("Недостаточно средств на счету. Пожалуйста, пополните счет.", "danger")
             else:
-                # Получаем обоих пользователей из базы данных
                 sender = db.query(User).get(current_user.id)
                 recipient = db.query(User).get(target.id)
 
                 sender.balance -= amount
                 recipient.balance += amount
 
-                # Получаем актуальное время
                 user_info = get_user_info()
                 current_time = datetime.strptime(user_info["current_time"], "%d %B %Y %H:%M MSK")
 
-                # Формируем описание перевода
                 if not description:
                     out_description = f"Перевод {amount} ₽ → {recipient.username}"
                     in_description = f"Получено {amount} ₽ от {sender.username}"
@@ -466,35 +441,27 @@ def transfer():
 
     return render_template("transfer.html", user_balance=user_balance)
 
-
-# Функция для нормализации номера телефона
 def normalize_phone_number(phone):
     if not phone:
         return None
 
-    # Удаляем все нецифровые символы кроме плюса
     cleaned = re.sub(r'[^\d+]', '', phone)
 
     if not cleaned:
         return None
 
-    # Если номер начинается с 8 (российский номер без кода страны)
     if cleaned.startswith('8') and len(cleaned) == 11:
         return '+7' + cleaned[1:]
 
-    # Если номер начинается с 7 (российский номер без плюса)
     elif cleaned.startswith('7') and len(cleaned) == 11:
         return '+' + cleaned
 
-    # Если номер уже в международном формате
     elif cleaned.startswith('+7') and len(cleaned) == 12:
         return cleaned
 
-    # Если номер в формате без кода страны (только 10 цифр)
     elif len(cleaned) == 10 and cleaned.isdigit():
         return '+7' + cleaned
 
-    # Для других случаев возвращаем как есть (может быть иностранный номер)
     elif cleaned.startswith('+'):
         return cleaned
 
@@ -513,7 +480,6 @@ def find_user_by_phone():
     if not phone:
         return jsonify({"error": "Номер телефона не указан"}), 400
 
-    # Нормализуем номер телефона
     normalized_phone = normalize_phone_number(phone)
     if not normalized_phone:
         return jsonify({"error": "Неверный формат номера телефона"}), 400
@@ -545,7 +511,6 @@ def execute_transfer():
             description = request.form.get("description", "")
             password = request.form.get("password")
 
-            # Проверяем пароль
             if not current_user.check_password(password):
                 flash("Неверный пароль", "danger")
                 return redirect(url_for("transfer"))
@@ -558,16 +523,13 @@ def execute_transfer():
                 flash("Получатель не найден", "danger")
                 return redirect(url_for("transfer"))
 
-            # Повторная проверка баланс
             if amount > sender.balance:
                 flash("Недостаточно средств", "danger")
                 return redirect(url_for("transfer"))
 
-            # Выполняем перевод
             sender.balance -= amount
             recipient.balance += amount
 
-            # Формируем описание перевода
             if not description:
                 out_description = f"Перевод {amount} ₽ → {recipient.username}"
                 in_description = f"Получено {amount} ₽ от {sender.username}"
@@ -812,7 +774,6 @@ def sanitize_ai_text(text, max_len=4000):
 
 
 def query_ollama(prompt):
-    """Функция для отправки запросов в Ollama"""
     try:
         payload = {
             "model": MODEL_NAME,
@@ -828,7 +789,7 @@ def query_ollama(prompt):
         response = requests.post(
             f"{OLLAMA_URL}/api/generate",
             json=payload,
-            timeout=30  # таймаут 30 секунд
+            timeout=30
         )
 
         if response.status_code == 200:
@@ -850,7 +811,6 @@ def query_ollama(prompt):
 
 
 def query_mistral(prompt):
-    """Функция для отправки запросов в Mistral"""
     try:
         response = client.chat.complete(
             model=model,
@@ -879,7 +839,6 @@ def query_mistral(prompt):
 def get_ai_response(prompt):
     """Основная функция для получения ответа от AI — сначала Ollama, затем Mistral"""
 
-    # Сначала пробуем Ollama
     print("Попытка подключения к Ollama...")
     response = query_ollama(prompt)
 
@@ -887,7 +846,6 @@ def get_ai_response(prompt):
         print("Успешно получен ответ от Ollama")
         return response
 
-    # Если Ollama не доступен
     print("Ollama не доступен, пробуем Mistral...")
     response = query_mistral(prompt)
 
@@ -895,7 +853,6 @@ def get_ai_response(prompt):
         print("Успешно получен ответ от Mistral")
         return response
 
-    # Если оба сервиса недоступны
     print("Оба AI сервиса не доступны")
     return "Не удалось получить ответ от AI сервисов. Пожалуйста, попробуйте позже."
 
@@ -905,8 +862,6 @@ def get_ai_response(prompt):
 def run_ai():
     data = request.get_json() or {}
     outcomes = data.get("outcome", [])
-
-    # Если передан массив, берем первый элемент, иначе работаем со строкой
     if isinstance(outcomes, list) and outcomes:
         outcome = outcomes[0]
     elif isinstance(outcomes, str):
@@ -964,4 +919,4 @@ with app.app_context():
         db.close()
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(port=5001, debug=True)
